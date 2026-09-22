@@ -1,0 +1,15 @@
+=== Gemini Responses Non-Stream Check ===
+HTTP Status: OK
+Response Object: response
+Model: gemini-3.8-flash-high
+Status: completed
+Output Type 0: reasoning (encrypted carrier preserved)
+Output Type 1: message
+Content Text: GEMINI_PONG
+Usage Tokens: total=100 (reasoning=86, output=4)
+
+=== Gemini Responses Stream Check ===
+HTTP Status: OK
+SSE frames received: 9
+Text Delta: STREAM_GEMINI_PONG
+Stream Completed: True

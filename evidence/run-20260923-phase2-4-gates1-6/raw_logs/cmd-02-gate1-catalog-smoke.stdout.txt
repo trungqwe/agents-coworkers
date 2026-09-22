@@ -1,0 +1,7 @@
+=== Starting CLIProxyAPI smoke test ===
+CLIProxyAPI gateway reachable on 127.0.0.1:8317.
+Querying /v1/models on 127.0.0.1:8317...
+Catalog total models: 25
+Catalog contains gpt-6-astra: True
+Catalog contains gemini-3.8-flash-high: True
+[PASS] Both target models (gpt-6-astra, gemini-3.8-flash-high) present in active catalog.

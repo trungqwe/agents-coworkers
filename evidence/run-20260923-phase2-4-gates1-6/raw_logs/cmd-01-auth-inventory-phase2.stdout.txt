@@ -1,0 +1,16 @@
+=== CLIProxyAPI Sanitized Auth Inventory ===
+Auth Directory Status: configured (available)
+
+Credential Counts:
+  Codex (ChatGPT Plus) : 1 (Target: 6)
+  Antigravity (Gemini) : 1 (Target: 8)
+
+Credential Inventory (Sanitized - No PII/Preimages):
+
+ProviderType CredentialHash   LastModified
+------------ --------------   ------------
+antigravity  882ae8d766f74457 2026-09-23 05:48:09
+codex        b52a6a0d216841d4 2026-09-23 05:43:28
+
+Status:
+  [PARTIAL_AUTH] In-progress: Codex 1/6, Antigravity 1/8.

@@ -26,7 +26,7 @@ This document governs test definitions, evidence tiers, and test creation rules 
 | `INV-001` Product Repo Read-Only | **L0** | **L0 (PASS)** | `git status` clean at commit `4a7c8c92` |
 | `INV-002` AO Upstream Clean | **L0** | **L0 (PASS)** | `git status` clean at commit `1140dd62` |
 | `INV-003` Unified Codex Harness | **L2** | **L2 (PASS)** | AO Codex adapter tests (`adapters/agent/codex`) |
-| `INV-004` Runtime Proof Required | **L5** | **L4 (BLOCKED_AUTH)** | Awaiting Phase 2 interactive OAuth login |
+| `INV-004` Runtime Proof Required | **L5** | **L5 (PASS: Gates 1–6)** | Gates 1–6 live runtime verified (catalog, Responses non-stream/stream, tool roundtrip, Codex->Astra, Codex->Gemini file edit loop); Gates 7–10 pending |
 | `INV-005` Concurrency Target Starts at 3 | **L7** | **L1 (STRUCTURAL)** | Target worker range: 3–7; initial runtime verification target: 3; maximum proven live concurrency: NOT YET PROVEN; worktree scaling primitives verified; live concurrency pending Gate 10 |
 | `INV-006` Daemon Fail-Closed Discovery | **L1** | **L0 (DOCUMENTED / PENDING_RUNTIME)** | Fail closed if multiple AO daemons are valid; documented runbook logic reviewed; runtime verification pending AO runtime phase |
 | `INV-007` Zero PII / Secret Leakage | **L2** | **L2 (PASS)** | Sanitized inventory mock PII assertion tests |

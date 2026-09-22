@@ -7,7 +7,7 @@
 - **Selected Candidate**: **Candidate A** (Unified Codex Client Harness via CLIProxyAPI Gateway)
 - **Architectural Status**: `SOURCE-FEASIBLE`
 - **Runtime Decision**: `PROVISIONALLY SELECTED` (Pending live runtime gates)
-- **Active Roadmap Phase**: Phase 2 — Minimal Authentication Proof (see [docs/04-ROADMAP.md](docs/04-ROADMAP.md))
+- **Active Roadmap Phase**: **Phase 5 — AO Runtime Proof** (authoritative phase status and exit criteria are maintained in [docs/04-ROADMAP.md](docs/04-ROADMAP.md))
 
 ---
 

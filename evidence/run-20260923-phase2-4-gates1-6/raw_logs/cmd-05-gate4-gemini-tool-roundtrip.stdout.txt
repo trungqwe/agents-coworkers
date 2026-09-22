@@ -1,0 +1,15 @@
+=== Gemini Tool Roundtrip Check ===
+Turn 1: User request with function declaration 'lookup_symbol'
+Model: gemini-3.8-flash-high
+Output Type: function_call
+Function Name: lookup_symbol
+Call ID: call_18d7c64f4091a168_1
+Arguments: {"symbol": "BTC"}
+
+Turn 2: Follow-up request with function_call_output '{"price":"95000 USD","status":"all_time_high"}'
+Model: gemini-3.8-flash-high
+Status: completed
+Synthesized Response: The lookup for the financial symbol **BTC** returned the following result:
+- **Price:** $95,000 USD
+- **Status:** All-Time High
+[PASS] Function call translation, execution result incorporation, and response synthesis fidelity verified.

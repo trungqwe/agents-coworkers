@@ -2,6 +2,8 @@
 
 This ledger records architectural decisions, their current validation status, evidence maturity, and revisit triggers.
 
+- **Active Roadmap Phase**: **Phase 5 — AO Runtime Proof** (authoritative phase status and exit criteria are maintained in [04-ROADMAP.md](04-ROADMAP.md)).
+
 ## Status Definitions
 
 ### Decision Status
@@ -24,7 +26,7 @@ This ledger records architectural decisions, their current validation status, ev
 
 ### D001 — Candidate A Provisionally Selected
 - **Decision Status**: `PROVISIONAL`
-- **Evidence Maturity**: `STATIC`
+- **Evidence Maturity**: `LIVE_RUNTIME`
 - **Decision**: Select Candidate A (AO Orchestrator `gpt-6-astra` + AO Workers `gemini-3.8-flash-high`, unified Codex harness via CLIProxyAPI gateway) for runtime verification.
 - **Reason**: Maximizes harness uniformity, minimizes client diversity, and leverages existing provider pools.
 - **Evidence**: Source inspection of AO Codex adapter, CLIProxyAPI translators, schema tests.
@@ -32,7 +34,7 @@ This ledger records architectural decisions, their current validation status, ev
 
 ### D002 — Unified Codex Client Harness
 - **Decision Status**: `PROVISIONAL`
-- **Evidence Maturity**: `UNIT_VERIFIED`
+- **Evidence Maturity**: `LIVE_RUNTIME`
 - **Decision**: Use `agent = "codex"` for both orchestrator and worker roles (`INV-003`).
 - **Reason**: Simplifies AO configuration, eliminates multi-adapter maintenance, and provides consistent tool execution.
 - **Evidence**: AO Codex adapter unit tests (`0.336s`), local process execution.
@@ -40,7 +42,7 @@ This ledger records architectural decisions, their current validation status, ev
 
 ### D003 — CLIProxyAPI Local Routing Boundary
 - **Decision Status**: `PROVISIONAL`
-- **Evidence Maturity**: `LOCAL_RUNTIME`
+- **Evidence Maturity**: `LIVE_RUNTIME`
 - **Decision**: Route all LLM requests through a local loopback CLIProxyAPI instance on port `8317`.
 - **Reason**: Centralizes credential selection, provider routing, availability/failover, account pooling (target: 6 Plus + 8 Pro), and wire protocol translation. Multiple credentials are for authorized availability/distribution within provider terms; they are not used to evade rate limits, quotas, or provider restrictions.
 - **Evidence**: Built executable starts, binds `127.0.0.1:8317`, handles `/v1/models`.

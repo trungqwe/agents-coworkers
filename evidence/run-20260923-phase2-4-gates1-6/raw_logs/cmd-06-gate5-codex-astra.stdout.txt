@@ -1,0 +1,27 @@
+Reusing existing CLIProxyAPI gateway listening on 127.0.0.1:8317 (external process preserved).
+Setting up isolated CODEX_HOME: D:\TU_CODE\test-isolated-codex-[ISOLATED_ID]
+Testing codex exec with model: gpt-6-astra through http://127.0.0.1:8317/v1
+Codex exit code: 0
+Codex output:
+Reading additional input from stdin...
+OpenAI Codex v0.154.0
+--------
+workdir: D:\TU_CODE\agents-coworkers
+model: gpt-6-astra
+provider: cliproxy
+approval: never
+sandbox: read-only
+reasoning effort: low
+reasoning summaries: none
+session id: [REDACTED_SESSION_ID]
+--------
+user
+ Respond with: CODEX_CLIPROXY_INTEGRATION_OK
+codex
+CODEX_CLIPROXY_INTEGRATION_OK
+tokens used
+11,797
+CODEX_CLIPROXY_INTEGRATION_OK
+[PASS] Codex integration verified through CLIProxyAPI.
+Cleaning up test CODEX_HOME...
+Preserving external CLIProxyAPI instance.

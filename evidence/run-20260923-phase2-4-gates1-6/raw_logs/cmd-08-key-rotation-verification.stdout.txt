@@ -1,0 +1,3 @@
+New private key accepted: True (Total models: 25)
+Old sample key rejected: True (HTTP Status: 401)
+[PASS] Gateway key rotation verified successfully without leaking key.

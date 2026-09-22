@@ -1,0 +1,14 @@
+=== Astra Responses Non-Stream Check ===
+HTTP Status: OK
+Response Object: response
+Model: gpt-6-astra
+Status: completed
+Output Type: message
+Content Text: PONG
+
+=== Astra Responses Stream Check ===
+HTTP Status: OK
+SSE frames received: 11
+Text Delta: STREAM_PONG
+Event: response.completed
+Stream Completed: True

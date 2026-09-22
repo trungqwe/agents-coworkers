@@ -1,0 +1,115 @@
+{
+  "phases": {
+    "Phase 1": {
+      "status": "COMPLETE",
+      "verified_level": "L3/L4"
+    },
+    "Phase 2": {
+      "status": "COMPLETE",
+      "verified_level": "L5",
+      "exit_criteria": "Sanitized inventory confirms 1 Codex + 1 Antigravity accounts"
+    },
+    "Phase 3": {
+      "status": "COMPLETE",
+      "verified_level": "L5",
+      "exit_criteria": "Gates 1, 2, 3, 4 pass via live CLIProxyAPI gateway"
+    },
+    "Phase 4": {
+      "status": "COMPLETE",
+      "verified_level": "L5",
+      "exit_criteria": "Gates 5, 6 pass via live codex exec on both target models"
+    },
+    "Phase 5": {
+      "status": "NEXT",
+      "verified_level": "PENDING_P5",
+      "exit_criteria": "Gates 7, 8, 9 pass on live AO daemon"
+    },
+    "Phase 6": {
+      "status": "BLOCKED",
+      "verified_level": "PENDING_P6",
+      "exit_criteria": "Gate 10 passes with 3 concurrent live workers"
+    },
+    "Phase 7": {
+      "status": "NOT AUTHORIZED",
+      "verified_level": "PENDING_AUTH",
+      "exit_criteria": "Requires explicit user authorization changing milestone boundaries"
+    },
+    "Phase 8": {
+      "status": "DEFERRED / OPTIONAL",
+      "verified_level": "PENDING_WORKLOAD",
+      "exit_criteria": "Capacity expansion when workload demands"
+    }
+  },
+  "gates": {
+    "Gate 1": {
+      "name": "CLIProxy Catalog",
+      "status": "PASS",
+      "level": "L4/L5",
+      "model_coverage": [
+        "gpt-6-astra",
+        "gemini-3.8-flash-high"
+      ],
+      "total_models": 25
+    },
+    "Gate 2": {
+      "name": "Direct Astra Responses",
+      "status": "PASS",
+      "level": "L5",
+      "stream": "PASS",
+      "non_stream": "PASS"
+    },
+    "Gate 3": {
+      "name": "Direct Gemini Responses",
+      "status": "PASS",
+      "level": "L5",
+      "stream": "PASS",
+      "non_stream": "PASS",
+      "reasoning_carrier": "PRESERVED"
+    },
+    "Gate 4": {
+      "name": "Gemini Tool Roundtrip",
+      "status": "PASS",
+      "level": "L5",
+      "function_call": "PASS",
+      "function_call_output": "PASS",
+      "synthesis": "PASS"
+    },
+    "Gate 5": {
+      "name": "Codex -> Astra",
+      "status": "PASS",
+      "level": "L5",
+      "harness": "codex-cli 0.154.0",
+      "target_model": "gpt-6-astra",
+      "marker_confirmed": true
+    },
+    "Gate 6": {
+      "name": "Codex -> Gemini Tool Loop",
+      "status": "PASS",
+      "level": "L5",
+      "harness": "codex-cli 0.154.0",
+      "target_model": "gemini-3.8-flash-high",
+      "file_edit_confirmed": true,
+      "fixture_clean": true
+    },
+    "Gate 7": {
+      "name": "Real AO Orchestrator",
+      "status": "NOT_RUN",
+      "level": "L6"
+    },
+    "Gate 8": {
+      "name": "Real AO Worker",
+      "status": "NOT_RUN",
+      "level": "L6"
+    },
+    "Gate 9": {
+      "name": "AO Rework Loop",
+      "status": "NOT_RUN",
+      "level": "L6"
+    },
+    "Gate 10": {
+      "name": "Real 3-Worker Wave",
+      "status": "NOT_RUN",
+      "level": "L7"
+    }
+  }
+}

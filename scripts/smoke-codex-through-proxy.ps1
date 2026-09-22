@@ -35,11 +35,35 @@ try {
         $tcp.Close()
     }
 
-    if (-not $listening) {
+    if ($listening) {
+        Write-Host "Reusing existing CLIProxyAPI gateway listening on 127.0.0.1:$proxyPort (external process preserved)." -ForegroundColor Cyan
+    } else {
         Write-Host "Starting CLIProxyAPI on port $proxyPort..." -ForegroundColor Cyan
         $proxyProc = Start-Process -FilePath $exePath -ArgumentList "-config", "`"$cfgPath`"" -PassThru -WindowStyle Hidden
         $proxyStartedByScript = $true
-        Start-Sleep -Seconds 2
+
+        # Probe until ready with a timeout
+        $maxWaitSeconds = 10
+        $ready = $false
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        while ($sw.Elapsed.TotalSeconds -lt $maxWaitSeconds) {
+            Start-Sleep -Milliseconds 300
+            $probeTcp = New-Object System.Net.Sockets.TcpClient
+            try {
+                $probeTcp.Connect("127.0.0.1", $proxyPort)
+                $ready = $true
+                break
+            } catch {
+                # continue waiting
+            } finally {
+                $probeTcp.Close()
+            }
+        }
+        if (-not $ready) {
+            Write-Error "FAIL: CLIProxyAPI failed to start and become reachable on 127.0.0.1:$proxyPort within $maxWaitSeconds seconds."
+            exit 1
+        }
+        Write-Host "CLIProxyAPI gateway reachable on 127.0.0.1:$proxyPort." -ForegroundColor Green
     }
 
     Write-Host "Setting up isolated CODEX_HOME: $tempCodexHome" -ForegroundColor Cyan
@@ -118,5 +142,7 @@ multi_agent = false
     if ($proxyStartedByScript -and $proxyProc) {
         Write-Host "Stopping script-managed CLIProxyAPI..." -ForegroundColor Cyan
         Stop-Process -Id $proxyProc.Id -Force -ErrorAction SilentlyContinue
+    } else {
+        Write-Host "Preserving external CLIProxyAPI instance." -ForegroundColor Gray
     }
 }

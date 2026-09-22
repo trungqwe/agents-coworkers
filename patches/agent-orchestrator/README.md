@@ -28,11 +28,34 @@ Because `agentConfig` in the unpatched CLI mirror struct lacks the `Effort` fiel
 
 ### Path A: Zero Patch (Recommended / Default)
 Upstream AO checkout is kept **100% clean** at `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`.
-- Configure orchestrator/worker models and effort levels via the AO Desktop GUI or direct daemon REST API (`PATCH /api/v1/projects/:id/config`).
+- Configure orchestrator/worker models and effort levels via the AO Desktop GUI or direct daemon REST API (`PUT /api/v1/projects/<PROJECT_ID>/config`).
+- Exact REST payload shape:
+  ```json
+  {
+    "config": {
+      "orchestrator": {
+        "agent": "codex",
+        "agentConfig": {
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "mode": "chat"
+        }
+      },
+      "worker": {
+        "agent": "codex",
+        "agentConfig": {
+          "model": "gemini-3.8-flash-high",
+          "effort": "low",
+          "mode": "chat"
+        }
+      }
+    }
+  }
+  ```
 - In CLI invocations (`ao spawn`), omit `--effort`. Sessions inherit effort from project/role configuration.
 - Do NOT use unpatched `ao project set-config --config-json` expecting effort to be preserved.
-- Verify configuration by reading back through daemon REST API:
-  Assert:
+- Verify configuration by reading back through daemon REST API `GET /api/v1/projects/<PROJECT_ID>`:
+  Assert under `project.config`:
   - `orchestrator.agentConfig.model == "gpt-6-astra"`
   - `orchestrator.agentConfig.effort == "low"`
   - `worker.agentConfig.model == "gemini-3.8-flash-high"`
@@ -62,6 +85,6 @@ If you require fully headless CLI operation with `ao project set-config --config
    $config = Get-Content "D:\TU_CODE\agents-coworkers\config\ao\project-config.example.json" -Raw
    ao project set-config <PROJECT_ID> --config-json $config
    ```
-6. Read back project configuration and verify effort was preserved.
+6. Read back project configuration via `GET /api/v1/projects/<PROJECT_ID>` and assert all four model/effort values under `project.config` survived.
 
 *Note: Do NOT permanently patch upstream until runtime Candidate A requires headless use.*

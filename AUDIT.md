@@ -1,6 +1,6 @@
 # Audit Report: Multi-Agent Orchestration Architecture (AO + CLIProxyAPI)
 
-- **Date**: 2026-09-23T03:05:00+07:00
+- **Date**: 2026-09-23T03:20:00+07:00
 - **Auditor**: Antigravity Integration Agent
 - **Audited Revisions**:
   - `agent-orchestrator`: `1140dd62dc7bb588b987e2c44aa1ff4796fa732b` (Exact Clean Match)
@@ -36,7 +36,7 @@ In accordance with strict safety mandates:
 | **Codex -> Gemini Live** | **NOT PROVEN** | Awaiting real OAuth credential for Gemini Pro |
 | **Gemini Tool Loop** | **NOT PROVEN** | Cannot verify tool calling fidelity without live endpoint responses |
 | **Real AO Workers** | **NOT PROVEN** | Git worktree creation & isolation primitives verified; live AO daemon worker session loop not yet executed |
-| **Concurrency Scaling** | **NOT PROVEN** | Git worktree scaling waves (1, 3, 5, 7) verified at filesystem level; target worker range: 3–7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence |
+| **Concurrency Scaling** | **NOT PROVEN** | Git worktree scaling waves (1, 3, 5, 7) verified at filesystem level; target worker range: 3-7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence |
 | **6+8 Account Pool** | **NOT PROVEN** | 0 accounts currently loaded in `~/.cli-proxy-api` |
 | **OVERALL VERDICT** | **BLOCKED_RUNTIME_AUTH** | Integration is structurally sound; halted exclusively on required user OAuth credentials |
 
@@ -52,12 +52,12 @@ At upstream commit `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`, `backend/internal
   - `TestHeadlessPatch_PatchedAgentConfigPreservesEffort` proves that adding `Effort` preserves effort values.
   - `TestProjectSetConfig_ConfigJSON_PreservesEffort` in `patches/agent-orchestrator/0001-cli-support-agent-effort.patch` inspects the HTTP request body and verifies `effort == "low"` for both roles.
 - **Architectural Solution**: Completely split the workflow into:
-  - **Path A (Zero Patch)**: Configure role model & effort via Desktop UI or REST API (`PATCH /api/v1/projects/:id/config`). Omit `--effort` from `ao spawn`. Read back and assert values via API.
+  - **Path A (Zero Patch)**: Configure role model & effort via Desktop UI or REST API (`PUT /api/v1/projects/<PROJECT_ID>/config`). Omit `--effort` from `ao spawn`. Read back and assert values under `project.config` via `GET /api/v1/projects/<PROJECT_ID>`.
   - **Path B (Headless CLI)**: Apply minimal patch `0001-cli-support-agent-effort.patch`, test, rebuild CLI, then use `ao project set-config --config-json` and `ao spawn --effort`.
 
 ### B. Decision Status & Concurrency Target
 - Set status to `PROVISIONALLY SELECTED` (Candidate A: `SOURCE-FEASIBLE`, Runtime Decision: `PENDING AUTH GATES`).
-- Replaced claims of "Workers: 3–7 parallel" with "Target worker range: 3–7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence".
+- Replaced claims of "Workers: 3-7 parallel" with "Target worker range: 3-7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence".
 - Clarified that AO upstream already contains native adapters for OpenCode and Agy; neither fallback requires writing a new adapter.
 
 ### C. Hardened Codex Smoke Test
@@ -68,10 +68,11 @@ At upstream commit `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`, `backend/internal
 
 ### D. Sanitized Auth Inventory Tool
 - Created `scripts/auth-inventory.ps1`:
-  - Never prints tokens, secrets, or keys.
+  - Never prints tokens, secrets, keys, raw filenames, or user emails.
   - Reports credential counts (Target: 6 Codex, 8 Antigravity).
-  - Reports SHA-256 identifier hashes and duplicate filenames.
-  - Detects identity collisions (Codex uses account hash; Antigravity uses email so duplicate identity updates existing file).
+  - Uses portable auth directory detection (`$env:CLIPROXY_AUTH_DIR`, `$env:USERPROFILE`, `$HOME`).
+  - Reports safe truncated SHA-256 identifier hashes without preimages.
+  - Login verification requires both console success message AND credential count increase. Relogin/update of an existing identity (e.g. same Antigravity email updating existing file) preserves count and is treated as an update rather than a new account.
 
 ---
 

@@ -1,9 +1,14 @@
 # Sanitized Auth Inventory for CLIProxyAPI
-# Scans ~/.cli-proxy-api for credentials and reports counts and sanitized IDs
-# NEVER prints tokens, keys, passwords, or raw secrets.
+# Scans ~/.cli-proxy-api for credentials and reports counts and sanitized IDs.
+# NEVER prints tokens, keys, passwords, raw filenames, emails, or raw secrets.
 
 param (
-    [string]$AuthDir = "C:\Users\Admin\.cli-proxy-api"
+    [string]$AuthDir = $(
+        if ($env:CLIPROXY_AUTH_DIR) { $env:CLIPROXY_AUTH_DIR }
+        elseif ($env:USERPROFILE) { Join-Path $env:USERPROFILE ".cli-proxy-api" }
+        elseif ($HOME) { Join-Path $HOME ".cli-proxy-api" }
+        else { "~/.cli-proxy-api" }
+    )
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,25 +29,26 @@ $antigravityCount = 0
 $otherCount = 0
 
 $inventory = @()
-$seenNames = @{}
 
 foreach ($file in $authFiles) {
-    $fname = $file.Name
-    $isDuplicate = $seenNames.ContainsKey($fname)
-    $seenNames[$fname] = $true
+    # Generate stable truncated hash from filename without exposing identity/email preimage
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    $hashBytes = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($file.Name))
+    $credentialHash = [System.BitConverter]::ToString($hashBytes).Replace("-", "").Substring(0, 16).ToLower()
 
     $providerType = "unknown"
-    $sanitizedId = [System.BitConverter]::ToString(([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($fname)))).Replace("-", "").Substring(0, 12).ToLower()
 
     try {
-        # Read only top-level metadata keys to detect provider type WITHOUT logging tokens
-        $json = Get-Content -Path $file.FullName -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
-        if ($json.type) {
-            $providerType = [string]$json.type
-        } elseif ($fname -match "codex") {
+        # Determine provider type safely without exposing file contents or logging
+        if ($file.Name -match "^codex-") {
             $providerType = "codex"
-        } elseif ($fname -match "antigravity" -or $fname -match "gemini") {
+        } elseif ($file.Name -match "^antigravity-") {
             $providerType = "antigravity"
+        } else {
+            $json = Get-Content -Path $file.FullName -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($json -and $json.type) {
+                $providerType = [string]$json.type
+            }
         }
     } catch {
         $providerType = "unparseable"
@@ -57,10 +63,8 @@ foreach ($file in $authFiles) {
     }
 
     $inventory += [PSCustomObject]@{
-        Filename       = $fname
         ProviderType   = $providerType
-        IdentifierHash = $sanitizedId
-        Duplicate      = $isDuplicate
+        CredentialHash = $credentialHash
         LastModified   = $file.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
     }
 }
@@ -73,8 +77,8 @@ if ($otherCount -gt 0) {
 }
 
 if ($inventory.Count -gt 0) {
-    Write-Host "`nCredential Inventory (Sanitized):" -ForegroundColor Yellow
-    $inventory | Format-Table Filename, ProviderType, IdentifierHash, Duplicate, LastModified -AutoSize
+    Write-Host "`nCredential Inventory (Sanitized - No PII/Preimages):" -ForegroundColor Yellow
+    $inventory | Format-Table ProviderType, CredentialHash, LastModified -AutoSize
 } else {
     Write-Host "`nNo credential files currently found in $AuthDir." -ForegroundColor Gray
 }

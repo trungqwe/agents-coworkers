@@ -64,16 +64,19 @@ cd D:\TU_CODE\agent-orchestrator\CLIProxyAPI
 ```
 
 #### Verification After Each Login:
-Do NOT rely on process exit codes alone. Verify BOTH:
+Do NOT rely on process exit codes alone. CLIProxyAPI login functions have internal error paths that log and return without exiting non-zero. Verify BOTH:
 1. Visible authentication success message in console output.
 2. Run the sanitized auth inventory to verify count increases:
    ```powershell
    powershell -ExecutionPolicy Bypass -File D:\TU_CODE\agents-coworkers\scripts\auth-inventory.ps1
    ```
-- **Target Counts**: Codex: 6 accounts, Antigravity: 8 accounts.
-- **Account Identity Notes**:
-  - Codex credential filenames include an account hash when available, ensuring separate files for separate accounts.
-  - Antigravity filenames are email-derived; logging in the same Google account again will overwrite/update the existing file rather than incrementing count. Ensure 8 distinct Google accounts are used.
+- **Login Verification Rule**:
+  - `Success message AND credential count increases` -> New distinct account authenticated.
+  - `Success message BUT count unchanged` -> Existing credential updated / possible repeated identity (e.g. logging into the same Google account again updates `antigravity-<email>.json`). This does NOT increment account pool capacity.
+- **Target Counts**: Codex: 6 distinct accounts, Antigravity: 8 distinct accounts.
+- **Privacy & Safety**:
+  - `auth-inventory.ps1` outputs only safe identifiers (`ProviderType`, `CredentialHash`, `LastModified`). It NEVER dumps raw filenames, emails, account IDs, or token contents.
+  - Never commit, share, or publish identity-bearing filenames or credential files.
 
 ### Step 3: Launch CLIProxyAPI Gateway
 Start the local gateway:
@@ -81,7 +84,7 @@ Start the local gateway:
 .\cli-proxy-api.exe -config D:\TU_CODE\agents-coworkers\config\cliproxy\config.runtime.yaml
 ```
 
-Run fail-closed catalog smoke test:
+Run fail-closed catalog smoke test (reuses running proxy or manages its own lifecycle if port is free):
 ```powershell
 powershell -ExecutionPolicy Bypass -File D:\TU_CODE\agents-coworkers\scripts\smoke-cliproxy.ps1
 ```
@@ -102,14 +105,43 @@ powershell -ExecutionPolicy Bypass -File D:\TU_CODE\agents-coworkers\scripts\smo
 #### Path A: Zero Patch (Recommended / Default)
 Upstream AO is kept clean at `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`.
 1. **Configure Role Model & Effort**:
-   Configure orchestrator and worker roles via the **AO Desktop UI** or direct **daemon REST API** (`PATCH /api/v1/projects/:id/config`).
+   Configure orchestrator and worker roles via the **AO Desktop UI** or direct **daemon REST API** (`PUT /api/v1/projects/<PROJECT_ID>/config`).
    *(Do NOT use unpatched `ao project set-config --config-json` because unpatched CLI silently drops the `effort` field).*
+
+   **Direct Daemon REST Example**:
+   ```powershell
+   $body = @'
+   {
+     "config": {
+       "orchestrator": {
+         "agent": "codex",
+         "agentConfig": {
+           "model": "gpt-6-astra",
+           "effort": "low",
+           "mode": "chat"
+         }
+       },
+       "worker": {
+         "agent": "codex",
+         "agentConfig": {
+           "model": "gemini-3.8-flash-high",
+           "effort": "low",
+           "mode": "chat"
+         }
+       }
+     }
+   }
+   '@
+   Invoke-RestMethod -Uri "http://127.0.0.1:23456/api/v1/projects/<PROJECT_ID>/config" -Method Put -Body $body -ContentType "application/json"
+   ```
+
 2. **Verify Configuration**:
-   Query daemon REST API `GET /api/v1/projects/<PROJECT_ID>` and assert:
+   Query daemon REST API `GET /api/v1/projects/<PROJECT_ID>` and assert under `project.config`:
    - `orchestrator.agentConfig.model == "gpt-6-astra"`
    - `orchestrator.agentConfig.effort == "low"`
    - `worker.agentConfig.model == "gemini-3.8-flash-high"`
    - `worker.agentConfig.effort == "low"`
+
 3. **Spawn Sessions** (Omit `--effort` flag; session inherits role config):
    ```powershell
    # Spawn Orchestrator

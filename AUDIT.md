@@ -1,5 +1,8 @@
 # Audit Report: Multi-Agent Orchestration Architecture (AO + CLIProxyAPI)
 
+> [!NOTE]
+> **Point-in-Time Audit Snapshot**: This file is a point-in-time audit snapshot. Current architecture, roadmap, acceptance criteria, and maintenance rules are authoritative under [/docs](docs/README.md).
+
 - **Date**: 2026-09-23T03:20:00+07:00
 - **Auditor**: Antigravity Integration Agent
 - **Audited Revisions**:
@@ -89,4 +92,4 @@ cd D:\TU_CODE\agent-orchestrator\CLIProxyAPI
 .\cli-proxy-api.exe -config D:\TU_CODE\agents-coworkers\config\cliproxy\config.runtime.yaml -antigravity-login
 ```
 
-Verify each login with `scripts\auth-inventory.ps1` before proceeding to the 8 sequential post-auth gates.
+Verify each login with `scripts\auth-inventory.ps1` before proceeding to the 10 sequential post-auth gates (see docs/04-ROADMAP.md).

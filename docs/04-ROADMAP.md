@@ -1,0 +1,93 @@
+# 04 — Development Roadmap & Runtime Gates
+
+This roadmap defines the single authoritative execution sequence for the multi-agent integration. Work proceeds strictly through ordered phases.
+
+---
+
+## 1. Roadmap Overview & Status Matrix
+
+| Phase | Description | Status | Primary Gate / Deliverable |
+| :--- | :--- | :--- | :--- |
+| **Phase 0** | Source Feasibility | **COMPLETE** | AO adapters, CLIProxyAPI translators, schema verified |
+| **Phase 1** | Pre-Auth Integration Foundation | **COMPLETE** | Configs, sanitized tools, discovery, regression tests |
+| **Phase 2** | Minimal Authentication Proof | **NEXT** | Exactly 1 Codex + 1 Antigravity account logged in |
+| **Phase 3** | Direct Provider Runtime Proof | **BLOCKED** *(P2)* | Gates 1, 2, 3, 4 (Catalog, Astra, Gemini, Tool Roundtrip) |
+| **Phase 4** | Codex Harness Runtime Proof | **BLOCKED** *(P3)* | Gates 5, 6 (Codex -> Astra, Codex -> Gemini Tool Loop) |
+| **Phase 5** | AO Runtime Proof | **BLOCKED** *(P4)* | Gates 7, 8, 9 (Real Orchestrator, Real Worker, Rework Loop) |
+| **Phase 6** | 3-Worker Concurrency Proof | **BLOCKED** *(P5)* | Gate 10 (Real 3-Worker Concurrency Wave) |
+| **Phase 7** | Pool Expansion & Concurrency Hardening | **DEFERRED** *(P6)* | Scale to 6 Plus + 8 Pro accounts; evaluate 5–7 workers |
+| **Phase 8** | Product Integration | **NOT AUTHORIZED** | Apply workforce to `AI-Auto-Video-Creator` tasks |
+
+---
+
+## 2. Canonical 10 Runtime Verification Gates
+
+Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential verification of all 10 gates:
+
+1. **Gate 1: CLIProxy Catalog**: `GET /v1/models` contains both `gpt-6-astra` and `gemini-3.8-flash-high`.
+2. **Gate 2: Direct Astra Responses**: Successful non-stream and stream response parsing via CLIProxyAPI gateway.
+3. **Gate 3: Direct Gemini Responses**: Successful non-stream and stream response parsing via CLIProxyAPI gateway.
+4. **Gate 4: Gemini Tool Roundtrip**: Function call translation, execution, and response synthesis fidelity verified.
+5. **Gate 5: Codex -> Astra**: Successful `codex exec` invocation through CLIProxyAPI targeting `gpt-6-astra`.
+6. **Gate 6: Codex -> Gemini Tool Loop**: Successful multi-turn coding and file editing loop via `codex exec` targeting `gemini-3.8-flash-high`.
+7. **Gate 7: Real AO Orchestrator**: Live session launched on Agent Orchestrator with `kind = "orchestrator"`.
+8. **Gate 8: Real AO Worker**: Live session launched on Agent Orchestrator with `kind = "worker"` using Gemini.
+9. **Gate 9: AO Rework Loop**: Orchestrator reviews worker worktree output and successfully issues a rework directive.
+10. **Gate 10: Real 3-Worker Wave**: Three concurrent live worker sessions complete isolated tasks without worktree, locking, or routing failures.
+
+---
+
+## 3. Phase Details & Exit Criteria
+
+### Phase 2: Minimal Authentication Proof (NEXT ACTION)
+- **Objective**: Authenticate the minimum viable credential set (1 ChatGPT Plus + 1 Gemini Pro) to enable runtime testing.
+- **Entry Criteria**: Phase 1 complete; sanitized inventory and smoke scripts operational.
+- **Required Work**:
+  1. Interactive login of exactly **one** ChatGPT Plus account (`-codex-login`).
+  2. Interactive login of exactly **one** Gemini Pro Google account (`-antigravity-login`).
+  3. Verify with `scripts/auth-inventory.ps1` that counts reach Codex: 1, Antigravity: 1.
+- **Exit Criteria**: Sanitized inventory confirms 1 Codex and 1 Antigravity credential present.
+- **Evidence Required**: Sanitized inventory output (hashes only; zero emails or raw filenames).
+- **Explicit Non-Goals**: Do NOT log in all 14 accounts in this phase. Test with minimal credentials first.
+
+### Phase 3: Direct Provider Runtime Proof
+- **Objective**: Verify raw HTTP API translation and tool roundtrips through CLIProxyAPI gateway.
+- **Entry Criteria**: Phase 2 complete (1+1 accounts loaded).
+- **Required Work**: Execute Gates 1, 2, 3, and 4.
+- **Exit Criteria**: Both models respond to `/v1/models` and direct Responses requests; tool call roundtrip passes.
+- **Evidence Required**: HTTP responses and tool roundtrip test output recorded in `/evidence`.
+- **Explicit Non-Goals**: Do not invoke Codex CLI or Agent Orchestrator yet.
+
+### Phase 4: Codex Harness Runtime Proof
+- **Objective**: Verify that Codex CLI interacts correctly with both models via CLIProxyAPI wire translation.
+- **Entry Criteria**: Phase 3 complete.
+- **Required Work**: Execute Gates 5 and 6 using isolated `CODEX_HOME`.
+- **Exit Criteria**: `codex exec` succeeds on `gpt-6-astra` and performs multi-turn file edits on `gemini-3.8-flash-high`.
+- **Evidence Required**: Execution transcripts with sanitized outputs.
+- **Explicit Non-Goals**: Do not launch AO sessions.
+
+### Phase 5: AO Runtime Proof
+- **Objective**: Verify that Agent Orchestrator successfully provisions and supervises single sessions.
+- **Entry Criteria**: Phase 4 complete.
+- **Required Work**: Execute Gates 7, 8, and 9 on a live AO daemon.
+- **Exit Criteria**: Orchestrator session runs; worker session runs; orchestrator reviews worker worktree and directs rework.
+- **Evidence Required**: AO daemon session logs and git worktree commit logs.
+- **Explicit Non-Goals**: Do not run concurrent workers yet.
+
+### Phase 6: 3-Worker Concurrency Proof
+- **Objective**: Prove concurrent multi-agent execution at the initial verified target scale (3 workers).
+- **Entry Criteria**: Phase 5 complete.
+- **Required Work**: Execute Gate 10 (parallel 3-worker wave).
+- **Exit Criteria**: 3 live workers execute in parallel across separate git worktrees without race conditions, token starvation, or session crashes.
+- **Evidence Required**: Parallel session execution logs and worktree integrity verification.
+- **Explicit Non-Goals**: Do not claim 5 or 7 workers until Phase 7.
+
+### Phase 7: Pool Expansion & Concurrency Hardening (DEFERRED)
+- **Objective**: Scale account pool to full target (6 Plus + 8 Pro) and test higher worker concurrency (5–7 workers).
+- **Entry Criteria**: Phase 6 complete.
+- **Explicit Non-Goals**: Deferred until 3-worker wave is empirically proven.
+
+### Phase 8: Product Integration (NOT AUTHORIZED)
+- **Objective**: Deploy multi-agent workforce to implementation tasks in `AI-Auto-Video-Creator`.
+- **Entry Criteria**: Phase 6 & Phase 7 complete; explicit user authorization changing milestone boundaries (`INV-001`).
+- **Status**: Strictly **NOT AUTHORIZED**.

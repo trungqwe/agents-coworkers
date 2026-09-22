@@ -6,7 +6,7 @@ The primary objective of this integration is to establish a practical, reliable,
 
 - **Orchestrator Role**: Plans, reviews, audits, and issues directives using `gpt-6-astra` (reasoning effort: `low`, harness: `codex`, kind: `orchestrator`, mode: `chat`).
 - **Worker Roles**: Concurrently implement tasks in isolated git worktrees using `gemini-3.8-flash-high` (reasoning effort: `low`, harness: `codex`, kind: `worker`, mode: `chat`).
-- **Target Scale**: Worker target range: 3–7 parallel workers (Initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence).
+- **Target Scale**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN.
 - **Core Value Proposition**: Minimize moving parts, eliminate manual coordination overhead, isolate code changes via native git worktrees, prevent merge collisions, and optimize token/context cost.
 
 ---
@@ -32,7 +32,7 @@ The following invariants must be preserved across all implementations, tests, an
 - `INV-002` — **AO Upstream Clean by Default**: Upstream `agent-orchestrator` (`1140dd62dc7bb588b987e2c44aa1ff4796fa732b`) remains unmodified in default operation (Path A).
 - `INV-003` — **Unified Codex Client Harness**: Both orchestrator and worker roles use `agent = "codex"` talking to CLIProxyAPI via Responses-compatible API.
 - `INV-004` — **Runtime Proof Outranks Static Inference**: No gate, candidate, or capability is marked verified based on code reading or static tests alone.
-- `INV-005` — **Worker Concurrency Target Starts at 3**: Live concurrency is proven in waves (1, then 3). 7 workers is a target, not a verified fact.
+- `INV-005` — **Concurrency Target Starts at 3**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN until Gate 10 passes.
 - `INV-006` — **Fail-Closed Daemon Discovery**: If multiple live AO daemons exist, scripts fail closed instead of guessing.
 - `INV-007` — **Zero PII & Secret Leakage**: No tokens, private keys, passwords, user emails, raw account filenames, or OS usernames are printed or committed.
 
@@ -47,7 +47,7 @@ The following invariants must be preserved across all implementations, tests, an
 - **Not** supporting every available LLM provider or harness in this repository.
 - **Not** building an expansive general-purpose test framework beyond targeted integration verification.
 - **Not** modifying product source in `AI-Auto-Video-Creator` until its authorization boundaries change.
-- **Not** using credential rotation to evade provider terms of service, quotas, or rate limits.
+- **Not** using multiple credentials to evade provider terms of service, quotas, or rate limits. Accounts are used solely for authorized availability and distribution within provider terms.
 
 ---
 

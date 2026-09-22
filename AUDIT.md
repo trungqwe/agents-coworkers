@@ -39,7 +39,7 @@ In accordance with strict safety mandates:
 | **Codex -> Gemini Live** | **NOT PROVEN** | Awaiting real OAuth credential for Gemini Pro |
 | **Gemini Tool Loop** | **NOT PROVEN** | Cannot verify tool calling fidelity without live endpoint responses |
 | **Real AO Workers** | **NOT PROVEN** | Git worktree creation & isolation primitives verified; live AO daemon worker session loop not yet executed |
-| **Concurrency Scaling** | **NOT PROVEN** | Git worktree scaling waves (1, 3, 5, 7) verified at filesystem level; target worker range: 3-7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence |
+| **Concurrency Scaling** | **NOT PROVEN** | Git worktree scaling waves (1, 3, 5, 7) verified at filesystem level; Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN |
 | **6+8 Account Pool** | **NOT PROVEN** | 0 accounts currently loaded in `~/.cli-proxy-api` |
 | **OVERALL VERDICT** | **BLOCKED_RUNTIME_AUTH** | Integration is structurally sound; halted exclusively on required user OAuth credentials |
 
@@ -60,7 +60,7 @@ At upstream commit `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`, `backend/internal
 
 ### B. Decision Status & Concurrency Target
 - Set status to `PROVISIONALLY SELECTED` (Candidate A: `SOURCE-FEASIBLE`, Runtime Decision: `PENDING AUTH GATES`).
-- Replaced claims of "Workers: 3-7 parallel" with "Target worker range: 3-7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence".
+- Replaced claims of "Workers: 3-7 parallel" with "Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN".
 - Clarified that AO upstream already contains native adapters for OpenCode and Agy; neither fallback requires writing a new adapter.
 
 ### C. Hardened Codex Smoke Test

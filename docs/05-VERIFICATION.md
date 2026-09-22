@@ -27,8 +27,8 @@ This document governs test definitions, evidence tiers, and test creation rules 
 | `INV-002` AO Upstream Clean | **L0** | **L0 (PASS)** | `git status` clean at commit `1140dd62` |
 | `INV-003` Unified Codex Harness | **L2** | **L2 (PASS)** | AO Codex adapter tests (`adapters/agent/codex`) |
 | `INV-004` Runtime Proof Required | **L5** | **L4 (BLOCKED_AUTH)** | Awaiting Phase 2 interactive OAuth login |
-| `INV-005` 3-Worker Concurrency | **L7** | **L1 (STRUCTURAL)** | File worktree scaling verified; live runtime pending |
-| `INV-006` Daemon Fail-Closed Discovery | **L1** | **L1 (PASS)** | Discovery script validates PID equality & `/healthz` |
+| `INV-005` Concurrency Target Starts at 3 | **L7** | **L1 (STRUCTURAL)** | Target worker range: 3–7; initial runtime verification target: 3; maximum proven live concurrency: NOT YET PROVEN; worktree scaling primitives verified; live concurrency pending Gate 10 |
+| `INV-006` Daemon Fail-Closed Discovery | **L1** | **L0 (DOCUMENTED / PENDING_RUNTIME)** | Fail closed if multiple AO daemons are valid; documented runbook logic reviewed; runtime verification pending AO runtime phase |
 | `INV-007` Zero PII / Secret Leakage | **L2** | **L2 (PASS)** | Sanitized inventory mock PII assertion tests |
 | AO Internal Effort Support | **L0/L2** | **L2 (PASS)** | Daemon store & service tests pass natively |
 | Zero-Patch CLI Effort Loss | **L2** | **L2 (PASS)** | `TestZeroPatch_UnpatchedAgentConfigDropsEffort` |

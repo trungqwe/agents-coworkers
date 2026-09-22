@@ -33,7 +33,7 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 7. **Gate 7: Real AO Orchestrator**: Live session launched on Agent Orchestrator with `kind = "orchestrator"`.
 8. **Gate 8: Real AO Worker**: Live session launched on Agent Orchestrator with `kind = "worker"` using Gemini.
 9. **Gate 9: AO Rework Loop**: Orchestrator reviews worker worktree output and successfully issues a rework directive.
-10. **Gate 10: Real 3-Worker Wave**: Three concurrent live worker sessions complete isolated tasks without worktree, locking, or routing failures.
+10. **Gate 10: Real 3-Worker Wave**: Three concurrent live worker sessions complete isolated tasks without worktree, locking, or routing failures (verifying initial runtime verification target of 3 workers; maximum proven live concurrency becomes 3 only after this gate passes).
 
 ---
 
@@ -75,7 +75,7 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 - **Explicit Non-Goals**: Do not run concurrent workers yet.
 
 ### Phase 6: 3-Worker Concurrency Proof
-- **Objective**: Prove concurrent multi-agent execution at the initial verified target scale (3 workers).
+- **Objective**: Prove concurrent multi-agent execution at the initial runtime verification target (3 workers). Target worker range is 3–7; maximum proven live concurrency remains NOT YET PROVEN until Gate 10 passes.
 - **Entry Criteria**: Phase 5 complete.
 - **Required Work**: Execute Gate 10 (parallel 3-worker wave).
 - **Exit Criteria**: 3 live workers execute in parallel across separate git worktrees without race conditions, token starvation, or session crashes.

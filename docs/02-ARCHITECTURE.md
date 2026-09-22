@@ -11,7 +11,7 @@ Agent Orchestrator
 │   ├── Model: gpt-6-astra
 │   └── Reasoning Effort: low
 │
-├── Worker Sessions (Target: 3–7 parallel, initial verified: 3)
+├── Worker Sessions (Target worker range: 3–7, initial runtime verification target: 3, maximum proven live concurrency: NOT YET PROVEN)
 │   ├── Role / Kind: worker
 │   ├── Agent Harness: codex
 │   ├── Model: gemini-3.8-flash-high
@@ -63,7 +63,7 @@ CLIProxyAPI Gateway (127.0.0.1:8317)
 
 ## 4. Dormant Fallback Architectures
 
-Should Candidate A encounter an unresolvable runtime blocker during testing (such as persistent Responses tool loop translation failures), the following alternatives are evaluated in order:
+Should Candidate A encounter an unresolved, reproducible failure root-cause isolated to Candidate A architectural boundaries (such as persistent Responses tool loop translation failures), the following alternatives are evaluated in order:
 
 1. **Candidate B — OpenCode Worker Fallback**:
    - Upstream AO already includes a native adapter: `backend/internal/adapters/agent/opencode/`.

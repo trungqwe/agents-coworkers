@@ -21,7 +21,7 @@ routing:
   session-affinity-ttl: "4h"
   session-affinity-subagents: false
 
-# Credential rotation & failover policies on rate-limit / 429
+# Credential selection, routing & failover policies on rate-limit / 429
 request-retry: 3
 max-retry-credentials: 0
 max-retry-interval: 15

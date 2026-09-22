@@ -28,7 +28,7 @@ Agent Orchestrator
 |
 +-- Orchestrator:  gpt-6-astra (effort: low, harness: codex, kind: orchestrator)
 +-- Workers:       gemini-3.8-flash-high (effort: low, harness: codex, kind: worker)
-|                  Target range: 3-7 parallel (initial verified target after auth: 3)
+|                  Target worker range: 3–7 | Initial runtime verification target: 3 | Maximum proven live concurrency: NOT YET PROVEN
 |
 +--> CLIProxyAPI Gateway (127.0.0.1:8317)
        +-- 6x ChatGPT Plus accounts -> gpt-6-astra
@@ -84,17 +84,10 @@ See [docs/06-OPERATIONS.md](docs/06-OPERATIONS.md) for complete dynamic daemon d
 
 ---
 
-## 5. Canonical 10 Runtime Verification Gates
+## 5. Runtime Acceptance
 
-The workforce must pass each gate sequentially before transitioning Candidate A to `ACCEPTED`:
+Candidate A remains `PROVISIONAL` until the canonical 10 runtime verification gates pass.
 
-1. **CLIProxy Catalog**: `GET /v1/models` contains `gpt-6-astra` and `gemini-3.8-flash-high`.
-2. **Direct Astra Responses**: Successful non-stream and stream responses via proxy.
-3. **Direct Gemini Responses**: Successful non-stream and stream responses via proxy.
-4. **Gemini Tool Roundtrip**: Tool-call translation and execution fidelity verified.
-5. **Codex -> Astra**: Successful `codex exec` invocation through CLIProxyAPI.
-6. **Codex -> Gemini Tool Loop**: Successful multi-turn coding and tool execution.
-7. **Real AO Orchestrator**: Live AO session with `kind = "orchestrator"`.
-8. **Real AO Worker**: Live AO session with `kind = "worker"` using Gemini.
-9. **AO Rework Loop**: Orchestrator reviews worker output and issues rework directive.
-10. **Real 3-Worker Wave**: Three concurrent live workers complete without worktree or lock failures.
+See:
+- [Canonical Roadmap & Runtime Gates](docs/04-ROADMAP.md)
+- [Verification Strategy & Evidence Hierarchy](docs/05-VERIFICATION.md)

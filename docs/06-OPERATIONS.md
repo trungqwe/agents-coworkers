@@ -82,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File D:\TU_CODE\agents-coworkers\scripts\smo
 ## 5. Agent Orchestrator Daemon Discovery & Configuration
 
 ### Dynamic Daemon Discovery Policy (`INV-006`):
-The discovery script searches candidates in strict priority order, validates each via `/healthz`, confirms PID equality, and **fails closed** if multiple live daemons are running:
+The documented daemon discovery runbook logic (PowerShell snippet below) searches candidates in strict priority order, validates each via `/healthz`, confirms PID equality, and **fails closed** if multiple live daemons are running:
 
 ```powershell
 $candidates = if ($env:AO_RUN_FILE) { @($env:AO_RUN_FILE) } else { @(

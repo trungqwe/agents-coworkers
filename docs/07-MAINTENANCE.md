@@ -38,7 +38,18 @@ An engineer or agent must **STOP execution immediately** and request human guida
 ## 3. Documentation Rules
 
 ### The Single-Home Rule
-Every technical fact, schema, gate definition, and invariant has **exactly one authoritative home** in `/docs`. Other files (including root summaries and scripts) link to that home. They must never independently copy, rephrase, or maintain duplicate parallel specifications.
+Authoritative normative definitions live in exactly one `/docs` file.
+
+Secondary and root files (such as root `README.md` and `DECISION.md`) MAY contain a short, clearly non-authoritative synopsis for navigation or quickstart purposes.
+
+Secondary files MUST NOT independently maintain:
+- full gate lists
+- decision criteria
+- roadmap phase definitions
+- evidence requirements
+- mutable runbook specifications
+
+When details change, the authoritative `/docs` file changes first.
 
 ### The Deletion & Consolidation Rule
 If two files are found to maintain the same technical truth:

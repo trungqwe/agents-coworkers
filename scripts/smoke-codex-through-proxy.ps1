@@ -3,15 +3,41 @@
 
 param (
     [string]$ProxyUrl = "http://127.0.0.1:8317/v1",
-    [string]$Model = "gpt-6-astra"
+    [string]$Model = "gpt-6-astra",
+    [switch]$ExpectAuthBlocked = $false
 )
 
 $ErrorActionPreference = "Stop"
 
-$tempCodexHome = Join-Path ([System.IO.Path]::GetTempPath()) "codex_cliproxy_test_$([System.Guid]::NewGuid().ToString('N'))"
+$proxyPort = 8317
+$exePath = "D:\TU_CODE\agent-orchestrator\CLIProxyAPI\cli-proxy-api.exe"
+$cfgPath = "D:\TU_CODE\agents-coworkers\config\cliproxy\config.example.yaml"
+$proxyStartedByScript = $false
+$proxyProc = $null
+
+$tempCodexHome = "D:\TU_CODE\test-isolated-codex-$([System.Guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory -Path $tempCodexHome -Force | Out-Null
 
 try {
+    # Check if proxy is already listening
+    $tcp = New-Object System.Net.Sockets.TcpClient
+    $listening = $false
+    try {
+        $tcp.Connect("127.0.0.1", $proxyPort)
+        $listening = $true
+    } catch {
+        $listening = $false
+    } finally {
+        $tcp.Close()
+    }
+
+    if (-not $listening) {
+        Write-Host "Starting CLIProxyAPI on port $proxyPort..." -ForegroundColor Cyan
+        $proxyProc = Start-Process -FilePath $exePath -ArgumentList "-config", "`"$cfgPath`"" -PassThru -WindowStyle Hidden
+        $proxyStartedByScript = $true
+        Start-Sleep -Seconds 2
+    }
+
     Write-Host "Setting up isolated CODEX_HOME: $tempCodexHome" -ForegroundColor Cyan
     
     $configContent = @"
@@ -34,15 +60,46 @@ multi_agent = false
     $env:CLIPROXY_KEY = "REDACTED_GATEWAY_KEY"
 
     Write-Host "Testing codex exec with model: $Model through $ProxyUrl" -ForegroundColor Cyan
-    try {
-        $output = codex exec --model $Model "Respond with: CODEX_CLIPROXY_INTEGRATION_OK" 2>&1
-        Write-Host "Output: $output"
-    } catch {
-        Write-Warning "[BLOCKED_RUNTIME_AUTH] Codex live call failed as expected without authenticated accounts: $_"
+    
+    $oldEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $output = cmd /c "codex exec --ephemeral --skip-git-repo-check --model $Model "Respond with: CODEX_CLIPROXY_INTEGRATION_OK" < nul 2>&1"
+    $codexExit = $LASTEXITCODE
+    $ErrorActionPreference = $oldEAP
+    $outputStr = ($output -join "`n")
+
+    Write-Host "Codex exit code: $codexExit"
+    Write-Host "Codex output:`n$outputStr"
+
+    if ($ExpectAuthBlocked) {
+        if ($codexExit -ne 0) {
+            Write-Host "[PRE-AUTH EXPECTED] Codex command exited with code $codexExit as expected prior to account authentication." -ForegroundColor Yellow
+            return
+        } else {
+            Write-Warning "Codex unexpectedly returned exit code 0 during pre-auth check."
+        }
     }
+
+    # Strict fail-closed verification (default behavior)
+    if ($codexExit -ne 0) {
+        Write-Error "FAIL-CLOSED: Codex command returned exit code ${codexExit}. Output: $outputStr"
+        exit 1
+    }
+
+    if ($outputStr -notmatch "CODEX_CLIPROXY_INTEGRATION_OK") {
+        Write-Error "FAIL-CLOSED: Expected marker 'CODEX_CLIPROXY_INTEGRATION_OK' missing from output: $outputStr"
+        exit 1
+    }
+
+    Write-Host "[PASS] Codex integration verified through CLIProxyAPI." -ForegroundColor Green
 } finally {
     Write-Host "Cleaning up test CODEX_HOME..." -ForegroundColor Cyan
     Remove-Item -Path $tempCodexHome -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item Env:CODEX_HOME -ErrorAction SilentlyContinue
     Remove-Item Env:CLIPROXY_KEY -ErrorAction SilentlyContinue
+
+    if ($proxyStartedByScript -and $proxyProc) {
+        Write-Host "Stopping script-managed CLIProxyAPI..." -ForegroundColor Cyan
+        Stop-Process -Id $proxyProc.Id -Force -ErrorAction SilentlyContinue
+    }
 }

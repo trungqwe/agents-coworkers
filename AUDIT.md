@@ -1,6 +1,6 @@
 # Audit Report: Multi-Agent Orchestration Architecture (AO + CLIProxyAPI)
 
-- **Date**: 2026-09-23T02:50:00+07:00
+- **Date**: 2026-09-23T03:05:00+07:00
 - **Auditor**: Antigravity Integration Agent
 - **Audited Revisions**:
   - `agent-orchestrator`: `1140dd62dc7bb588b987e2c44aa1ff4796fa732b` (Exact Clean Match)
@@ -9,7 +9,7 @@
 - **Built Binary**:
   - `CLIProxyAPI/cli-proxy-api.exe`: SHA-256 `E9DA39B2491856BE2D3711E20BE89690F3465E2A5B7A469BA1A29AFF7AB342D2`
 - **Destination Repository**: `https://github.com/trungqwe/agents-coworkers`
-- **Evidence Run**: `evidence/run-20260923-preauth-corrections`
+- **Evidence Run**: `evidence/run-20260923-final-preauth`
 
 ---
 
@@ -30,69 +30,62 @@ In accordance with strict safety mandates:
 | Dimension | Status | Evidence / Verification Method |
 | :--- | :--- | :--- |
 | **Candidate A Architecture** | **SOURCE-FEASIBLE** | Verified AO Codex adapter, CLIProxyAPI translators, schema contracts |
-| **Static / Unit Tests** | **MOSTLY PASS** | AO adapter (0.336s), AO CLI (14.873s), AO session service (0.066s), CLIProxyAPI translator (0.075s), handlers (9.341s), auth (1.141s), template structural test (0.200s) |
+| **Static / Unit Tests** | **MOSTLY PASS** | AO adapter (0.336s), AO CLI (15.665s), AO session service (0.066s), CLIProxyAPI translator (0.075s), handlers (9.341s), auth (1.141s), structural & effort regression tests (0.198s) |
 | **Live CLIProxy Server** | **PARTIAL PASS** | Process starts, binds `127.0.0.1:8317`, returns 200 OK on `GET /v1/models`. Target models absent when 0 accounts authenticated; fail-closed check verified |
 | **Codex -> Astra Live** | **NOT PROVEN** | Awaiting real OAuth credential for ChatGPT Plus |
 | **Codex -> Gemini Live** | **NOT PROVEN** | Awaiting real OAuth credential for Gemini Pro |
 | **Gemini Tool Loop** | **NOT PROVEN** | Cannot verify tool calling fidelity without live endpoint responses |
 | **Real AO Workers** | **NOT PROVEN** | Git worktree creation & isolation primitives verified; live AO daemon worker session loop not yet executed |
-| **3/5/7 Worker Concurrency** | **NOT PROVEN** | Git worktree scaling waves (1, 3, 5, 7) verified at filesystem level; multi-agent LLM concurrency not yet executed |
+| **Concurrency Scaling** | **NOT PROVEN** | Git worktree scaling waves (1, 3, 5, 7) verified at filesystem level; target worker range: 3–7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence |
 | **6+8 Account Pool** | **NOT PROVEN** | 0 accounts currently loaded in `~/.cli-proxy-api` |
 | **OVERALL VERDICT** | **BLOCKED_RUNTIME_AUTH** | Integration is structurally sound; halted exclusively on required user OAuth credentials |
 
 ---
 
-## 3. Findings & Audit Corrections
+## 3. Critical Findings & Pre-Auth Corrections
 
-### A. Fresh CLIProxyAPI Verification at Exact SHA `24303543`
-- Rerun uncached tests at revision `2430354330af80b645f9ffb1a51e1e7c72c4cc8e`:
-  - `go test ./internal/translator/antigravity/openai/responses`: `0.075s` (PASS)
-  - `go test -count=1 ./sdk/api/handlers/openai`: `9.341s` (PASS)
-  - `go test -count=1 ./sdk/cliproxy/auth`: `1.141s` (PASS)
-- Binary rebuilt: `cli-proxy-api.exe` with SHA-256: `E9DA39B2491856BE2D3711E20BE89690F3465E2A5B7A469BA1A29AFF7AB342D2`.
+### A. Zero-Patch CLI Effort Loss
+At upstream commit `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`, `backend/internal/cli/project.go` defines `agentConfig` without `Effort`.
+- **Finding**: Running unpatched `ao project set-config --config-json <json>` unmarshals into `agentConfig`, silently discarding `effort` before sending the HTTP payload to the daemon.
+- **Regression Tests**:
+  - `TestZeroPatch_UnpatchedAgentConfigDropsEffort` in `tests/integration/project_config_schema_test.go` proves the effort loss on unpatched structs.
+  - `TestHeadlessPatch_PatchedAgentConfigPreservesEffort` proves that adding `Effort` preserves effort values.
+  - `TestProjectSetConfig_ConfigJSON_PreservesEffort` in `patches/agent-orchestrator/0001-cli-support-agent-effort.patch` inspects the HTTP request body and verifies `effort == "low"` for both roles.
+- **Architectural Solution**: Completely split the workflow into:
+  - **Path A (Zero Patch)**: Configure role model & effort via Desktop UI or REST API (`PATCH /api/v1/projects/:id/config`). Omit `--effort` from `ao spawn`. Read back and assert values via API.
+  - **Path B (Headless CLI)**: Apply minimal patch `0001-cli-support-agent-effort.patch`, test, rebuild CLI, then use `ao project set-config --config-json` and `ao spawn --effort`.
 
-### B. AO Project Configuration Command & Schema
-- Corrected runbook syntax: AO defines `ao project set-config <id> --config-json <json>` (no `--file` flag exists).
-  ```powershell
-  $config = Get-Content "D:\TU_CODE\agents-coworkers\config\ao\project-config.example.json" -Raw
-  ao project set-config <PROJECT_ID> --config-json $config
-  ```
-- Structural validation test in `tests/integration/project_config_schema_test.go` validates template syntax and keys (`orchestrator`, `worker`, `agent`, `agentConfig`, `model`, `effort`, `mode`).
+### B. Decision Status & Concurrency Target
+- Set status to `PROVISIONALLY SELECTED` (Candidate A: `SOURCE-FEASIBLE`, Runtime Decision: `PENDING AUTH GATES`).
+- Replaced claims of "Workers: 3–7 parallel" with "Target worker range: 3–7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence".
+- Clarified that AO upstream already contains native adapters for OpenCode and Agy; neither fallback requires writing a new adapter.
 
-### C. AO Spawn Role Assignment (`--kind orchestrator`)
-- Corrected `ao spawn` invocations: AO defaults session kind to `worker`. Spawning the orchestrator requires explicit `--kind orchestrator`:
-  ```powershell
-  ao spawn --project <PROJECT_ID> --kind orchestrator --agent codex --name "Orchestrator" --model "gpt-6-astra" --mode chat
-  ```
-- Documented patch precondition: Upstream AO tree is kept clean. Documented two paths (Zero Patch via UI/REST vs Headless CLI via optional patch `0001-cli-support-agent-effort.patch`).
-
-### D. Codex Smoke Test Strict Fail-Closed
+### C. Hardened Codex Smoke Test
 - Updated `scripts/smoke-codex-through-proxy.ps1`:
-  - Non-zero Codex exit code -> script exit 1
-  - Missing expected marker `CODEX_CLIPROXY_INTEGRATION_OK` -> script exit 1
-  - Successful response with marker -> script exit 0
-  - Added `-ExpectAuthBlocked` parameter for pre-auth negative verification.
-  - Automatically manages local CLIProxyAPI lifecycle if not already running on port 8317.
+  - In `-ExpectAuthBlocked` mode, requires matching documented unauthenticated gateway signatures (`model_not_found` / `unknown provider for model`). Unrelated failures (syntax, connection refusal, crashes) remain FAIL.
+  - Default mode strictly fails closed (exit 1) on any failure or missing marker.
+  - Supports private runtime gateway key via `$env:CLIPROXY_KEY`.
 
-### E. Fallback Comparison Fact Correction
-- Upstream Agent Orchestrator already provides native adapters for:
-  - OpenCode (`backend/internal/adapters/agent/opencode/`)
-  - Agy (`backend/internal/adapters/agent/agy/`)
-- Neither fallback candidate requires building a new AO adapter. Candidate A remains provisionally selected for single-harness simplicity.
+### D. Sanitized Auth Inventory Tool
+- Created `scripts/auth-inventory.ps1`:
+  - Never prints tokens, secrets, or keys.
+  - Reports credential counts (Target: 6 Codex, 8 Antigravity).
+  - Reports SHA-256 identifier hashes and duplicate filenames.
+  - Detects identity collisions (Codex uses account hash; Antigravity uses email so duplicate identity updates existing file).
 
 ---
 
 ## 4. Unblocking Live Runtime Gates
 
-Run the following interactive login commands with the explicit config path:
+Run the following interactive login commands with the runtime config:
 ```powershell
 cd D:\TU_CODE\agent-orchestrator\CLIProxyAPI
 
-# 1. Authenticate ChatGPT Plus accounts (repeat for each of your 6 accounts)
-.\cli-proxy-api.exe -config D:\TU_CODE\agents-coworkers\config\cliproxy\config.example.yaml -codex-login
+# 1. Authenticate ChatGPT Plus accounts (repeat for each of your 6 accounts):
+.\cli-proxy-api.exe -config D:\TU_CODE\agents-coworkers\config\cliproxy\config.runtime.yaml -codex-login
 
-# 2. Authenticate Gemini Pro accounts (repeat for each of your 8 accounts)
-.\cli-proxy-api.exe -config D:\TU_CODE\agents-coworkers\config\cliproxy\config.example.yaml -antigravity-login
+# 2. Authenticate Gemini Pro accounts (repeat for each of your 8 accounts):
+.\cli-proxy-api.exe -config D:\TU_CODE\agents-coworkers\config\cliproxy\config.runtime.yaml -antigravity-login
 ```
 
-Follow the post-auth sequential gates (1 to 8) without jumping directly to 7 workers.
+Verify each login with `scripts\auth-inventory.ps1` before proceeding to the 8 sequential post-auth gates.

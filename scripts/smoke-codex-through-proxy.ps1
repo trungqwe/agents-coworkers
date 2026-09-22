@@ -4,6 +4,7 @@
 param (
     [string]$ProxyUrl = "http://127.0.0.1:8317/v1",
     [string]$Model = "gpt-6-astra",
+    [string]$GatewayKey = $(if ($env:CLIPROXY_KEY) { $env:CLIPROXY_KEY } else { "REDACTED_GATEWAY_KEY" }),
     [switch]$ExpectAuthBlocked = $false
 )
 
@@ -12,6 +13,9 @@ $ErrorActionPreference = "Stop"
 $proxyPort = 8317
 $exePath = "D:\TU_CODE\agent-orchestrator\CLIProxyAPI\cli-proxy-api.exe"
 $cfgPath = "D:\TU_CODE\agents-coworkers\config\cliproxy\config.example.yaml"
+if (Test-Path "D:\TU_CODE\agents-coworkers\config\cliproxy\config.runtime.yaml") {
+    $cfgPath = "D:\TU_CODE\agents-coworkers\config\cliproxy\config.runtime.yaml"
+}
 $proxyStartedByScript = $false
 $proxyProc = $null
 
@@ -57,7 +61,7 @@ multi_agent = false
     [System.IO.File]::WriteAllText((Join-Path $tempCodexHome "config.toml"), $configContent, [System.Text.UTF8Encoding]::new($false))
 
     $env:CODEX_HOME = $tempCodexHome
-    $env:CLIPROXY_KEY = "REDACTED_GATEWAY_KEY"
+    $env:CLIPROXY_KEY = $GatewayKey
 
     Write-Host "Testing codex exec with model: $Model through $ProxyUrl" -ForegroundColor Cyan
     
@@ -72,11 +76,24 @@ multi_agent = false
     Write-Host "Codex output:`n$outputStr"
 
     if ($ExpectAuthBlocked) {
-        if ($codexExit -ne 0) {
-            Write-Host "[PRE-AUTH EXPECTED] Codex command exited with code $codexExit as expected prior to account authentication." -ForegroundColor Yellow
+        $expectedSignatures = @(
+            "model_not_found",
+            "unknown provider for model"
+        )
+        $foundExpectedSignature = $false
+        foreach ($sig in $expectedSignatures) {
+            if ($outputStr -match [regex]::Escape($sig)) {
+                $foundExpectedSignature = $true
+                break
+            }
+        }
+
+        if ($codexExit -ne 0 -and $foundExpectedSignature) {
+            Write-Host "[PRE-AUTH EXPECTED] Codex command failed with code $codexExit matching documented unauthenticated signature ('model_not_found' / 'unknown provider for model')." -ForegroundColor Green
             return
         } else {
-            Write-Warning "Codex unexpectedly returned exit code 0 during pre-auth check."
+            Write-Error "FAIL-CLOSED: -ExpectAuthBlocked requires specific unauthenticated gateway signature ('model_not_found' / 'unknown provider for model'). Arbitrary failures, syntax errors, or connection drops remain FAIL. Code: $codexExit, Output: $outputStr"
+            exit 1
         }
     }
 

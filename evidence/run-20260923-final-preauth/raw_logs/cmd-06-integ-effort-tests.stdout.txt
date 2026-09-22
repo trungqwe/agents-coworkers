@@ -1,0 +1,8 @@
+=== RUN   TestProjectConfigTemplate_StructuralValidation
+--- PASS: TestProjectConfigTemplate_StructuralValidation (0.00s)
+=== RUN   TestZeroPatch_UnpatchedAgentConfigDropsEffort
+--- PASS: TestZeroPatch_UnpatchedAgentConfigDropsEffort (0.00s)
+=== RUN   TestHeadlessPatch_PatchedAgentConfigPreservesEffort
+--- PASS: TestHeadlessPatch_PatchedAgentConfigPreservesEffort (0.00s)
+PASS
+ok  	github.com/trungqwe/agents-coworkers/tests/integration	0.198s

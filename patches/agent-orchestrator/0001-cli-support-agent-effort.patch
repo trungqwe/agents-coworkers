@@ -10,6 +10,71 @@ index 7d4e84733..856b0268e 100644
  	Mode        string `json:"mode,omitempty"`
  	Permissions string `json:"permissions,omitempty"`
  }
+diff --git a/backend/internal/cli/project_test.go b/backend/internal/cli/project_test.go
+index 305584c44..898338dfe 100644
+--- a/backend/internal/cli/project_test.go
++++ b/backend/internal/cli/project_test.go
+@@ -85,6 +85,60 @@ func TestProjectSetConfig_TrackerIntakeJSON(t *testing.T) {
+ 	}
+ }
+ 
++func TestProjectSetConfig_ConfigJSON_PreservesEffort(t *testing.T) {
++	cfg := setConfigEnv(t)
++	srv, capture := projectServer(t, http.StatusOK, `{"project":{"id":"demo","path":"/repo/demo"}}`)
++	writeRunFileFor(t, cfg, srv)
++
++	inputJSON := `{"worker":{"agentConfig":{"model":"gemini-3.8-flash-high","effort":"low"}},"orchestrator":{"agentConfig":{"model":"gpt-6-astra","effort":"low"}}}`
++	_, errOut, err := executeCLI(t, Deps{
++		ProcessAlive: func(int) bool { return true },
++	}, "project", "set-config", "demo", "--config-json", inputJSON)
++	if err != nil {
++		t.Fatalf("unexpected error: %v\nstderr=%s", err, errOut)
++	}
++
++	var rawBody map[string]any
++	if err := json.Unmarshal(capture.body, &rawBody); err != nil {
++		t.Fatalf("decode raw request: %v\nbody=%s", err, capture.body)
++	}
++
++	configObj, ok := rawBody["config"].(map[string]any)
++	if !ok {
++		t.Fatalf("expected 'config' object in request body, got %#v", rawBody)
++	}
++
++	workerObj, ok := configObj["worker"].(map[string]any)
++	if !ok {
++		t.Fatalf("expected 'worker' object in config, got %#v", configObj)
++	}
++	workerAgentCfg, ok := workerObj["agentConfig"].(map[string]any)
++	if !ok {
++		t.Fatalf("expected 'agentConfig' in worker, got %#v", workerObj)
++	}
++	if workerAgentCfg["effort"] != "low" {
++		t.Fatalf("worker agentConfig.effort = %v, want low", workerAgentCfg["effort"])
++	}
++	if workerAgentCfg["model"] != "gemini-3.8-flash-high" {
++		t.Fatalf("worker agentConfig.model = %v, want gemini-3.8-flash-high", workerAgentCfg["model"])
++	}
++
++	orchObj, ok := configObj["orchestrator"].(map[string]any)
++	if !ok {
++		t.Fatalf("expected 'orchestrator' object in config, got %#v", configObj)
++	}
++	orchAgentCfg, ok := orchObj["agentConfig"].(map[string]any)
++	if !ok {
++		t.Fatalf("expected 'agentConfig' in orchestrator, got %#v", orchObj)
++	}
++	if orchAgentCfg["effort"] != "low" {
++		t.Fatalf("orchestrator agentConfig.effort = %v, want low", orchAgentCfg["effort"])
++	}
++	if orchAgentCfg["model"] != "gpt-6-astra" {
++		t.Fatalf("orchestrator agentConfig.model = %v, want gpt-6-astra", orchAgentCfg["model"])
++	}
++}
++
+ func TestBuildProjectConfigTrackerIntakeFlags(t *testing.T) {
+ 	got, err := buildProjectConfig(projectSetConfigOptions{
+ 		trackerIntake:   true,
 diff --git a/backend/internal/cli/spawn.go b/backend/internal/cli/spawn.go
 index 11b4a2cab..c7b377c33 100644
 --- a/backend/internal/cli/spawn.go

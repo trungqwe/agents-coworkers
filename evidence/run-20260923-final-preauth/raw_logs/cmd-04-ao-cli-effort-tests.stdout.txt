@@ -1,0 +1,6 @@
+=== RUN   TestProjectSetConfig_ConfigJSON_PreservesEffort
+--- PASS: TestProjectSetConfig_ConfigJSON_PreservesEffort (0.02s)
+=== RUN   TestSpawnCommand_EffortFlagForwarded
+--- PASS: TestSpawnCommand_EffortFlagForwarded (0.02s)
+PASS
+ok  	github.com/aoagents/agent-orchestrator/backend/internal/cli	0.133s

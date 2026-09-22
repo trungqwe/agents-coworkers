@@ -1,0 +1,11 @@
+=== CLIProxyAPI Sanitized Auth Inventory ===
+Auth Directory: C:\Users\[REDACTED_USER]\\.cli-proxy-api
+
+Credential Counts:
+  Codex (ChatGPT Plus) : 0 (Target: 6)
+  Antigravity (Gemini) : 0 (Target: 8)
+
+No credential files currently found in C:\Users\[REDACTED_USER]\\.cli-proxy-api.
+
+Status:
+  [PENDING_AUTH] 0 accounts authenticated. Run -codex-login and -antigravity-login.

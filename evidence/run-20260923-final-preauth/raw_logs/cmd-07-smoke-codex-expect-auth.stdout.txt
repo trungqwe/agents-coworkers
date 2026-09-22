@@ -1,0 +1,24 @@
+Starting CLIProxyAPI on port 8317...
+Setting up isolated CODEX_HOME: D:\TU_CODE\test-isolated-codex-439ae5f571a54f5db44dae149f67adad
+Testing codex exec with model: gpt-6-astra through http://127.0.0.1:8317/v1
+Codex exit code: 1
+Codex output:
+Reading additional input from stdin...
+OpenAI Codex v0.154.0
+--------
+workdir: D:\TU_CODE\agents-coworkers
+model: gpt-6-astra
+provider: cliproxy
+approval: never
+sandbox: read-only
+reasoning effort: low
+reasoning summaries: none
+session id: 01a0caba-002b-7eb3-b9a8-236b6aac5e18
+--------
+user
+ Respond with: CODEX_CLIPROXY_INTEGRATION_OK
+ERROR: {"error":{"code":"model_not_found","message":"unknown provider for model gpt-6-astra","param":"model","type":"invalid_request_error"}}
+ERROR: {"error":{"code":"model_not_found","message":"unknown provider for model gpt-6-astra","param":"model","type":"invalid_request_error"}}
+[PRE-AUTH EXPECTED] Codex command failed with code 1 matching documented unauthenticated signature ('model_not_found' / 'unknown provider for model').
+Cleaning up test CODEX_HOME...
+Stopping script-managed CLIProxyAPI...

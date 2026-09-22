@@ -32,3 +32,7 @@ static/
 
 # Proxy dynamic UI
 config/cliproxy/static/
+
+# Private runtime configuration (contains local gateway keys)
+config/cliproxy/config.runtime.yaml
+*.runtime.yaml

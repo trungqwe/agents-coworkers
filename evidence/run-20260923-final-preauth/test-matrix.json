@@ -1,0 +1,112 @@
+{
+  "decision_status": "PROVISIONALLY_SELECTED",
+  "candidate_a_source_feasible": true,
+  "runtime_decision": "PENDING_AUTH_GATES",
+  "overall": "BLOCKED_RUNTIME_AUTH",
+  "test_suites": [
+    {
+      "name": "AO Codex Adapter",
+      "package": "backend/internal/adapters/agent/codex",
+      "status": "PASS",
+      "duration": "0.336s",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "AO CLI Commands (Full Suite)",
+      "package": "backend/internal/cli",
+      "status": "PASS",
+      "duration": "15.665s",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "AO CLI Effort Forwarding & Project Config Preservation (Patched)",
+      "package": "backend/internal/cli",
+      "status": "PASS",
+      "duration": "0.133s",
+      "details": "TestSpawnCommand_EffortFlagForwarded (0.02s) and TestProjectSetConfig_ConfigJSON_PreservesEffort (0.02s) PASS",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "AO Session Service (with Windows path assertion check)",
+      "package": "backend/internal/service/session",
+      "status": "PASS",
+      "duration": "0.066s",
+      "details": "126 tests passed; TestCleanWorkspaceRelativePathKeepsBackslashOnPOSIX correctly skipped on Windows runtime per platform spec",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "Zero-Patch Effort-Loss Proof & Headless Preservation Tests",
+      "package": "tests/integration",
+      "status": "PASS",
+      "duration": "0.198s",
+      "details": "TestZeroPatch_UnpatchedAgentConfigDropsEffort proves unpatched mirror struct drops effort; TestHeadlessPatch_PatchedAgentConfigPreservesEffort proves patched struct preserves effort='low'",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI Antigravity-OpenAI Responses Translator",
+      "package": "internal/translator/antigravity/openai/responses",
+      "status": "PASS",
+      "duration": "0.075s",
+      "sha": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI OpenAI Handlers (Fresh Uncached)",
+      "package": "sdk/api/handlers/openai",
+      "status": "PASS",
+      "duration": "9.341s",
+      "sha": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI Auth Selector & Routing (Fresh Uncached)",
+      "package": "sdk/cliproxy/auth",
+      "status": "PASS",
+      "duration": "1.141s",
+      "sha": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e",
+      "type": "STATIC_SOURCE_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI Server Runtime & Catalog (Strict Fail-Closed)",
+      "script": "scripts/smoke-cliproxy.ps1",
+      "status": "FAIL_CLOSED_VERIFIED",
+      "details": "Process starts, binds 127.0.0.1:8317, returns 200 OK on /v1/models; fails closed (exit 1) when target models (gpt-6-astra, gemini-3.8-flash-high) are absent due to unauthenticated accounts",
+      "type": "LIVE_SERVER_PARTIAL_PASS"
+    },
+    {
+      "name": "Codex CLI through CLIProxyAPI (Hardened Pre-Auth & Fail-Closed)",
+      "script": "scripts/smoke-codex-through-proxy.ps1",
+      "status": "HARDENED_FAIL_CLOSED_VERIFIED",
+      "details": "-ExpectAuthBlocked strictly validates model_not_found/unknown provider signature; default invocation strictly fails closed (exit 1)",
+      "type": "LIVE_SERVER_PARTIAL_PASS"
+    },
+    {
+      "name": "Sanitized Auth Inventory Tool",
+      "script": "scripts/auth-inventory.ps1",
+      "status": "PASS",
+      "details": "Scans ~/.cli-proxy-api; reports 0 Codex / 0 Antigravity credentials; zero secrets exposed; duplicate detection verified",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "AO Git Worktree Isolation & Zero Collision",
+      "script": "scripts/smoke-ao.ps1",
+      "status": "PASS",
+      "details": "Validates Git worktree creation, branch isolation, and multi-worker commit primitives. Does NOT prove live AO daemon session manager or real LLM workers.",
+      "type": "GIT_WORKTREE_PRIMITIVE_PROVEN"
+    },
+    {
+      "name": "Worker Concurrency Scaling Waves (1, 3, 5, 7)",
+      "script": "scripts/stress-workers.ps1",
+      "status": "PASS",
+      "details": "Validates Git worktree scaling primitives for 1, 3, 5, 7 parallel worktrees (125ms, 379ms, 656ms, 961ms). Target worker range: 3\u20137; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence.",
+      "type": "GIT_WORKTREE_PRIMITIVE_PROVEN"
+    },
+    {
+      "name": "Live Upstream Responses Tool Loop (Astra & Gemini)",
+      "target": "POST /v1/responses",
+      "status": "BLOCKED_RUNTIME_AUTH",
+      "details": "0 usable accounts in ~/.cli-proxy-api; blocked on interactive browser OAuth login for the 6+8 pool",
+      "type": "BLOCKED"
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 - **Candidate A**: SOURCE-FEASIBLE
 - **Runtime Decision**: PENDING AUTH GATES
 
-Candidate A only transitions from **PROVISIONALLY SELECTED** to **ACCEPTED** after satisfying the 10 sequential runtime verification gates:
+Candidate A only transitions from **PROVISIONALLY SELECTED** to **ACCEPTED** after satisfying all 10 sequential runtime verification gates:
 1. **CLIProxy Catalog**: `/v1/models` returns 200 OK with both `gpt-6-astra` and `gemini-3.8-flash-high` active.
 2. **Direct Astra Responses**: Successful non-stream and stream responses from upstream OpenAI via CLIProxyAPI.
 3. **Direct Gemini Responses**: Successful non-stream and stream responses from upstream Antigravity via CLIProxyAPI.
@@ -14,7 +14,7 @@ Candidate A only transitions from **PROVISIONALLY SELECTED** to **ACCEPTED** aft
 7. **Real AO Orchestrator**: Verified live session launch on Agent Orchestrator with role `orchestrator`.
 8. **Real AO Worker**: Verified live session launch on Agent Orchestrator with role `worker`.
 9. **AO Rework Loop**: Verified orchestrator review, audit, and directive issuance to worker sessions.
-10. **Real 3-Worker Wave**: Parallel execution of 3 concurrent live worker sessions without lock collisions or token exhaustion.
+10. **Real 3-Worker Wave**: Parallel execution of 3 concurrent live worker sessions without lock collisions or token exhaustion. (Target worker range: 3–7; initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence).
 
 ---
 
@@ -42,7 +42,8 @@ Candidate A only transitions from **PROVISIONALLY SELECTED** to **ACCEPTED** aft
       |  Role:    Plan, Review, |                           |  Mode:    chat          |
       |           Audit, Issue  |                           |  Role:    Parallel      |
       |           Directives    |                           |           Module Dev    |
-      |                         |                           |  Count:   3 to 7        |
+      |                         |                           |  Range:   3 to 7 (target|
+      |                         |                           |           initial: 3)   |
       +------------+------------+                           +------------+------------+
                    |                                                     |
                    +--------------------------+--------------------------+
@@ -84,7 +85,7 @@ AO upstream already includes native adapters for both OpenCode and Agy. Neither 
 
 ---
 
-## 3. Concrete Component Specifications
+## 3. Concrete Component Specifications & Commands
 
 ### A. Orchestrator
 - **Kind**: `orchestrator`
@@ -92,17 +93,31 @@ AO upstream already includes native adapters for both OpenCode and Agy. Neither 
 - **Model**: `gpt-6-astra`
 - **Effort**: `low`
 - **Mode**: `chat`
-- **Spawn Command**:
-  ```powershell
-  ao spawn `
-    --project <PROJECT_ID> `
-    --kind orchestrator `
-    --agent codex `
-    --name "Orchestrator" `
-    --model "gpt-6-astra" `
-    --effort low `
-    --mode chat
-  ```
+
+**Zero-Patch Spawn Command (Default / No upstream modification)**:
+```powershell
+ao spawn `
+  --project <PROJECT_ID> `
+  --kind orchestrator `
+  --agent codex `
+  --name "Orchestrator" `
+  --model "gpt-6-astra" `
+  --mode chat
+```
+*(Reasoning effort inherits from project/role configuration configured via Desktop UI or REST API).*
+
+**Headless CLI Spawn Command [PATCH REQUIRED]**:
+```powershell
+# Requires applying patches/agent-orchestrator/0001-cli-support-agent-effort.patch and rebuilding CLI
+ao spawn `
+  --project <PROJECT_ID> `
+  --kind orchestrator `
+  --agent codex `
+  --name "Orchestrator" `
+  --model "gpt-6-astra" `
+  --effort low `
+  --mode chat
+```
 
 ### B. Worker
 - **Kind**: `worker`
@@ -110,21 +125,36 @@ AO upstream already includes native adapters for both OpenCode and Agy. Neither 
 - **Model**: `gemini-3.8-flash-high`
 - **Effort**: `low`
 - **Mode**: `chat`
-- **Spawn Command**:
-  ```powershell
-  ao spawn `
-    --project <PROJECT_ID> `
-    --kind worker `
-    --agent codex `
-    --name "Worker-1" `
-    --model "gemini-3.8-flash-high" `
-    --effort low `
-    --mode chat
-  ```
+- **Target worker range**: 3–7 parallel workers (Initial verified target after auth: 3; maximum live concurrency: TBD from runtime evidence).
+
+**Zero-Patch Spawn Command (Default / No upstream modification)**:
+```powershell
+ao spawn `
+  --project <PROJECT_ID> `
+  --kind worker `
+  --agent codex `
+  --name "Worker-1" `
+  --model "gemini-3.8-flash-high" `
+  --mode chat
+```
+*(Reasoning effort inherits from project/role configuration configured via Desktop UI or REST API).*
+
+**Headless CLI Spawn Command [PATCH REQUIRED]**:
+```powershell
+# Requires applying patches/agent-orchestrator/0001-cli-support-agent-effort.patch and rebuilding CLI
+ao spawn `
+  --project <PROJECT_ID> `
+  --kind worker `
+  --agent codex `
+  --name "Worker-1" `
+  --model "gemini-3.8-flash-high" `
+  --effort low `
+  --mode chat
+```
 
 ### C. Local Gateway (CLIProxyAPI)
 - **Port**: `8317` (Loopback `127.0.0.1`)
-- **Config**: `config/cliproxy/config.example.yaml`
+- **Config**: `config/cliproxy/config.example.yaml` (or private gitignored `config/cliproxy/config.runtime.yaml`)
 - **Account Pools**:
   - 6x ChatGPT Plus accounts for `gpt-6-astra`
   - 8x Gemini Pro accounts for `gemini-3.8-flash-high`

@@ -1,0 +1,1 @@
+FAIL-CLOSED: Codex command returned exit code 1. Output: ERROR: {"error":{"code":"model_not_found","message":"unknown provider for model gpt-6-astra","param":"model","type":"invalid_request_error"}}

@@ -1,14 +1,18 @@
-﻿{
+{
   "orchestrator": {
     "agent": "codex",
-    "model": "gpt-6-astra",
-    "effort": "low",
-    "mode": "chat"
+    "agentConfig": {
+      "model": "gpt-6-astra",
+      "effort": "low",
+      "mode": "chat"
+    }
   },
   "worker": {
     "agent": "codex",
-    "model": "gemini-3.8-flash-high",
-    "effort": "low",
-    "mode": "chat"
+    "agentConfig": {
+      "model": "gemini-3.8-flash-high",
+      "effort": "low",
+      "mode": "chat"
+    }
   }
 }

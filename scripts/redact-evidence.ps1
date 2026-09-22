@@ -1,4 +1,4 @@
-﻿# Redact Evidence Script
+# Redact Evidence Script
 # Scans files in evidence/ for sensitive secrets, tokens, emails, and paths
 # Replaces matching patterns with [REDACTED_*] placeholders
 
@@ -35,7 +35,7 @@ foreach ($file in $files) {
         }
     }
     if ($modified -ne $content) {
-        Set-Content -Path $file.FullName -Value $modified -Encoding UTF8
+        [System.IO.File]::WriteAllText($file.FullName, $modified, [System.Text.UTF8Encoding]::new($false))
     }
 }
 

@@ -1,4 +1,4 @@
-﻿# Smoke test for Codex CLI through CLIProxyAPI
+# Smoke test for Codex CLI through CLIProxyAPI
 # Uses an isolated CODEX_HOME to guarantee user ~/.codex is never modified
 
 param (
@@ -28,15 +28,18 @@ env_key = "CLIPROXY_KEY"
 [features]
 multi_agent = false
 "@
-    Set-Content -Path (Join-Path $tempCodexHome "config.toml") -Value $configContent -Encoding UTF8
+    [System.IO.File]::WriteAllText((Join-Path $tempCodexHome "config.toml"), $configContent, [System.Text.UTF8Encoding]::new($false))
 
     $env:CODEX_HOME = $tempCodexHome
     $env:CLIPROXY_KEY = "REDACTED_GATEWAY_KEY"
 
     Write-Host "Testing codex exec with model: $Model through $ProxyUrl" -ForegroundColor Cyan
-    # Run codex exec non-interactively
-    $output = codex exec --model $Model "Respond with: CODEX_CLIPROXY_INTEGRATION_OK" 2>&1
-    Write-Host "Output: $output"
+    try {
+        $output = codex exec --model $Model "Respond with: CODEX_CLIPROXY_INTEGRATION_OK" 2>&1
+        Write-Host "Output: $output"
+    } catch {
+        Write-Warning "[BLOCKED_RUNTIME_AUTH] Codex live call failed as expected without authenticated accounts: $_"
+    }
 } finally {
     Write-Host "Cleaning up test CODEX_HOME..." -ForegroundColor Cyan
     Remove-Item -Path $tempCodexHome -Recurse -Force -ErrorAction SilentlyContinue

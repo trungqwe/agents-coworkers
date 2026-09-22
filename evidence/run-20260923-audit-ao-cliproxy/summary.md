@@ -1,4 +1,4 @@
-﻿# Audit Run Summary: AO + CLIProxyAPI Multi-Agent Architecture
+# Audit Run Summary: AO + CLIProxyAPI Multi-Agent Architecture
 
 - **Run ID**: `run-20260923-audit-ao-cliproxy`
 - **Execution Date**: 2026-09-23T02:17:00+07:00

@@ -1,5 +1,6 @@
-﻿# Stress test for Worker Concurrency Waves
-# Evaluates worker parallel isolation across waves: 1, 3, 5, 7
+# Stress test for Git Worktree Concurrency Waves (1, 3, 5, 7)
+# Tests Git worktree concurrent scaling primitives (GIT_WORKTREE_PRIMITIVE_PROVEN)
+# NOTE: This validates local Git worktree scaling mechanics, NOT live multi-agent LLM concurrency.
 
 param (
     [int[]]$Waves = @(1, 3, 5, 7),
@@ -8,7 +9,7 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=== Multi-Worker Concurrency Simulation (1, 3, 5, 7) ===" -ForegroundColor Cyan
+Write-Host "=== Git Worktree Concurrency Primitive Evaluation (1, 3, 5, 7) ===" -ForegroundColor Cyan
 
 foreach ($count in $Waves) {
     Write-Host "`n--- Testing Wave: $count concurrent workers ---" -ForegroundColor Yellow
@@ -48,14 +49,19 @@ foreach ($count in $Waves) {
     Write-Host "  Elapsed time: $($stopwatch.ElapsedMilliseconds) ms"
     Write-Host "  Main tree isolation preserved: $mainClean" -ForegroundColor $(if ($mainClean) { "Green" } else { "Red" })
     
+    if (-not $mainClean) {
+        Write-Error "Isolation violation during wave $count"
+        exit 1
+    }
+    
     # Cleanup
     for ($i = 1; $i -le $count; $i++) {
         $wt = Join-Path $wtBase "wt-$i"
         git -C $repo worktree remove -f $wt 2>$null
     }
-    Remove-Item $repo -Recurse -Force -ErrorAction SilentlyContinue
-    Remove-Item $wtBase -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $repo -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $wtBase -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Remove-Item $BaseTestDir -Recurse -Force -ErrorAction SilentlyContinue
-Write-Host "`n[OK] Concurrency wave evaluation completed." -ForegroundColor Green
+Write-Host "`n[PASS] GIT_WORKTREE_PRIMITIVE_PROVEN: Concurrency wave evaluation completed for waves: $($Waves -join ', ')." -ForegroundColor Green

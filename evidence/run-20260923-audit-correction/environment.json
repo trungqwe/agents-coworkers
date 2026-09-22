@@ -1,11 +1,11 @@
 {
-  "run_id": "run-20260923-audit-ao-cliproxy",
-  "timestamp": "2026-09-23T02:17:00+07:00",
+  "run_id": "run-20260923-audit-correction",
+  "timestamp": "2026-09-23T02:39:00+07:00",
   "os": "Windows 11 (windows/amd64)",
   "toolchains": {
     "go": "go version go1.26.5 windows/amd64",
     "python": "Python 3.13.12",
-    "codex_cli": "codex-cli 0.154.0"
+    "git": "git version 2.45.2.windows.1"
   },
   "repositories": {
     "agent-orchestrator": {
@@ -19,27 +19,16 @@
       "path": "D:\\TU_CODE\\agent-orchestrator\\CLIProxyAPI",
       "upstream": "https://github.com/router-for-me/CLIProxyAPI",
       "audited_reference_sha": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e",
-      "actual_head_sha": "555662940411a07460e9d24d14477a5f50dffdb5",
-      "status": "DIVERGED_AHEAD",
-      "binary_sha256": "3F57B540390ACCC0FA85BBD26F95707681C851E4DB3E95588192D87DCFED8435"
+      "actual_head_sha": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e",
+      "status": "FAST_FORWARDED_MATCH",
+      "binary_sha256": "E9DA39B2491856BE2D3711E20BE89690F3465E2A5B7A469BA1A29AFF7AB342D2"
     },
     "AI-Auto-Video-Creator": {
       "path": "D:\\AI Auto Video Creator",
-      "upstream": "https://github.com/trungqwe/AI-Auto-Video-Creator.git",
+      "upstream": "https://github.com/trungqwe/AI-Auto-Video-Creator",
       "audited_reference_sha": "4a7c8c921b7e05066505d51b168a02c3fde61317",
       "actual_head_sha": "4a7c8c921b7e05066505d51b168a02c3fde61317",
-      "status": "CLEAN_MATCH_READ_ONLY",
-      "gate_status": {
-        "M2-P1..P7B": "ACCEPTED_CLOSED",
-        "P8/P9": "LOCKED",
-        "M3/Phân hệ A": "NOT_AUTHORIZED"
-      }
+      "status": "READ_ONLY_MATCH"
     }
-  },
-  "account_inventory": {
-    "codex_openai_accounts_detected": 0,
-    "antigravity_gemini_accounts_detected": 0,
-    "auth_directory": "~/.cli-proxy-api",
-    "status": "BLOCKED_RUNTIME_AUTH"
   }
 }

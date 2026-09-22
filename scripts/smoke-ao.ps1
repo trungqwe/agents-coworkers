@@ -1,5 +1,6 @@
-﻿# Smoke test for Agent Orchestrator Multi-Worker Isolation
-# Verifies worktree creation, branch isolation, and multi-worker execution
+# Smoke test for Git Worktree Primitive Isolation
+# Tests Git worktree creation, branch isolation, and multi-worker commit primitives (GIT_WORKTREE_PRIMITIVE_PROVEN)
+# NOTE: This validates local Git worktree mechanics as used by AO, NOT live AO daemon sessions with LLM agents.
 
 param (
     [string]$RepoPath = "D:\TU_CODE\test-disposable-repo",
@@ -9,7 +10,7 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=== 1. Setting up disposable Git repository for AO verification ===" -ForegroundColor Cyan
+Write-Host "=== 1. Setting up disposable Git repository for AO worktree primitive verification ===" -ForegroundColor Cyan
 if (Test-Path $RepoPath) { Remove-Item -Path $RepoPath -Recurse -Force -ErrorAction SilentlyContinue }
 if (Test-Path $WorktreeBase) { Remove-Item -Path $WorktreeBase -Recurse -Force -ErrorAction SilentlyContinue }
 
@@ -23,7 +24,7 @@ git -C $RepoPath commit -m "chore: initial commit"
 
 Write-Host "Repository initialized at $RepoPath" -ForegroundColor Green
 
-Write-Host "`n=== 2. Creating External Worktrees (matching AO architecture under ~/.ao/worktrees) ===" -ForegroundColor Cyan
+Write-Host "`n=== 2. Creating External Worktrees (matching AO worktree architecture) ===" -ForegroundColor Cyan
 for ($i = 1; $i -le $WorkerCount; $i++) {
     $branch = "feature/worker-$i"
     $wtPath = Join-Path $WorktreeBase "worker-$i"
@@ -43,8 +44,9 @@ Write-Host "`n=== 3. Validating Worktree Isolation & Zero Collision ===" -Foregr
 $mainStatus = git -C $RepoPath status --porcelain
 if ($mainStatus) {
     Write-Host "[FAIL] Main repo working tree was dirtied by workers: $mainStatus" -ForegroundColor Red
+    exit 1
 } else {
-    Write-Host "[PASS] Main working tree remains 100% clean and completely isolated from workers." -ForegroundColor Green
+    Write-Host "[PASS] GIT_WORKTREE_PRIMITIVE_PROVEN: Worktree isolation verified across $WorkerCount workers. Main working tree remains 100% clean." -ForegroundColor Green
 }
 
 $worktreeList = git -C $RepoPath worktree list
@@ -53,7 +55,7 @@ Write-Host "Registered Worktrees:`n$worktreeList" -ForegroundColor Green
 Write-Host "`n=== 4. Cleaning up disposable repository ===" -ForegroundColor Cyan
 for ($i = 1; $i -le $WorkerCount; $i++) {
     $wtPath = Join-Path $WorktreeBase "worker-$i"
-    git -C $RepoPath worktree remove $wtPath --force -ErrorAction SilentlyContinue
+    git -C $RepoPath worktree remove -f $wtPath 2>$null
 }
 Remove-Item -Path $RepoPath -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path $WorktreeBase -Recurse -Force -ErrorAction SilentlyContinue

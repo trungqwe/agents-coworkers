@@ -1,4 +1,4 @@
-﻿# Agent Orchestrator Minimal Patch
+# Agent Orchestrator Minimal Patch
 
 - **Target Base SHA**: `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`
 - **Component**: `backend/internal/cli/`

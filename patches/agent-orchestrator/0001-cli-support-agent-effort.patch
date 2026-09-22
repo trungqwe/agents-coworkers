@@ -1,24 +1,9 @@
-﻿From 1140dd62dc7bb588b987e2c44aa1ff4796fa732b Mon Sep 17 00:00:00 2001
-From: Antigravity Agent <agent@local>
-Date: Wed, 23 Sep 2026 02:16:00 +0700
-Subject: [PATCH] fix(cli): add effort support to project config and spawn command
-
-Preserves reasoning effort in CLI project get-config / set-config commands
-and exposes the --effort flag in ao spawn to allow setting reasoning effort
-for sessions from the CLI.
-
-Base SHA: 1140dd62dc7bb588b987e2c44aa1ff4796fa732b
----
- backend/internal/cli/project.go | 1 +
- backend/internal/cli/spawn.go   | 3 +++
- 2 files changed, 4 insertions(+)
-
 diff --git a/backend/internal/cli/project.go b/backend/internal/cli/project.go
-index e3412ab..75a431c 100644
+index 7d4e84733..856b0268e 100644
 --- a/backend/internal/cli/project.go
 +++ b/backend/internal/cli/project.go
-@@ -35,6 +35,7 @@ type projectConfig struct {
- 
+@@ -76,6 +76,7 @@ type workspaceRepoDetails struct {
+ // agentConfig mirrors the daemon's typed domain.AgentConfig for the CLI client.
  type agentConfig struct {
  	Model       string `json:"model,omitempty"`
 +	Effort      string `json:"effort,omitempty"`
@@ -26,10 +11,10 @@ index e3412ab..75a431c 100644
  	Permissions string `json:"permissions,omitempty"`
  }
 diff --git a/backend/internal/cli/spawn.go b/backend/internal/cli/spawn.go
-index 923af12..d8341ae 100644
+index 11b4a2cab..c7b377c33 100644
 --- a/backend/internal/cli/spawn.go
 +++ b/backend/internal/cli/spawn.go
-@@ -32,6 +32,7 @@ type spawnOptions struct {
+@@ -30,6 +30,7 @@ type spawnOptions struct {
  	issue           string
  	name            string
  	model           string
@@ -37,19 +22,64 @@ index 923af12..d8341ae 100644
  	claimPR         string
  	noTakeover      bool
  	skipAgentCheck  bool
-@@ -48,6 +49,7 @@ type spawnRequest struct {
+@@ -49,6 +50,7 @@ type spawnRequest struct {
  	Branch          string `json:"branch,omitempty"`
  	Prompt          string `json:"prompt,omitempty"`
  	Model           string `json:"model,omitempty"`
 +	Effort          string `json:"effort,omitempty"`
  	DisplayName     string `json:"displayName"`
  }
-@@ -101,6 +103,7 @@ func newSpawnCommand(ctx *commandContext) *cobra.Command {
+ 
+@@ -164,6 +166,7 @@ func newSpawnCommand(ctx *commandContext) *cobra.Command {
+ 				Branch:          opts.branch,
+ 				Prompt:          opts.prompt,
+ 				Model:           strings.TrimSpace(opts.model),
++				Effort:          strings.TrimSpace(opts.effort),
+ 				DisplayName:     name,
+ 			}
+ 			var res spawnResult
+@@ -225,6 +228,7 @@ func newSpawnCommand(ctx *commandContext) *cobra.Command {
+ 	f.StringVar(&opts.branch, "branch", "", "Branch for git project sessions (default: ao/<session-id>/root; unsupported for standalone or Scratch sessions)")
  	f.StringVar(&opts.prompt, "prompt", "", "Initial prompt for the agent")
  	f.StringVar(&opts.model, "model", "", "Agent model override for this session only (e.g. sonnet, gpt-5.6-sol); overrides project/role config without changing it")
 +	f.StringVar(&opts.effort, "effort", "", "Agent reasoning effort override for this session (e.g. low, medium, high); overrides project/role config without changing it")
  	f.StringVar(&opts.issue, "issue", "", "Issue id to associate with the session")
  	f.StringVar(&opts.trackerProvider, "tracker-provider", "github", "Issue tracker provider: github or gitlab (default: github)")
  	f.StringVar(&opts.name, "name", "", "Display name shown in the sidebar (required, max 100 characters)")
--- 
-2.47.0
+diff --git a/backend/internal/cli/spawn_test.go b/backend/internal/cli/spawn_test.go
+index be13fc7ea..9b95a6a6f 100644
+--- a/backend/internal/cli/spawn_test.go
++++ b/backend/internal/cli/spawn_test.go
+@@ -1011,3 +1011,32 @@ func TestSpawnModelFlagWiring(t *testing.T) {
+ 		t.Fatalf("spawn request model = %q, want gpt-5.6-sol", req.Model)
+ 	}
+ }
++
++func TestSpawnCommand_EffortFlagForwarded(t *testing.T) {
++	cfg := setConfigEnv(t)
++	var spawnedBody map[string]any
++	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.Header().Set("Content-Type", "application/json")
++		switch {
++		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/projects/proj-1":
++			_, _ = io.WriteString(w, `{"status":"ok","project":{"id":"proj-1","name":"Demo","path":"/repo/demo","repo":"https://github.com/aoagents/agent-orchestrator","defaultBranch":"main"}}`)
++		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/agents/readiness/ensure":
++			_, _ = io.WriteString(w, authorizedAgentsJSON("codex"))
++		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/sessions":
++			_ = json.NewDecoder(r.Body).Decode(&spawnedBody)
++			_, _ = io.WriteString(w, `{"session":{"id":"demo-10","status":"idle"}}`)
++		default:
++			http.NotFound(w, r)
++		}
++	}))
++	t.Cleanup(srv.Close)
++	writeRunFileFor(t, cfg, srv)
++
++	_, errOut, err := executeCLI(t, Deps{ProcessAlive: func(int) bool { return true }}, "spawn", "--project", "proj-1", "--agent", "codex", "--name", "worker", "--effort", "low")
++	if err != nil {
++		t.Fatalf("spawn: %v\nstderr: %s", err, errOut)
++	}
++	if spawnedBody["effort"] != "low" {
++		t.Fatalf("expected effort=low in request body, got %#v", spawnedBody["effort"])
++	}
++}

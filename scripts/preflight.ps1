@@ -1,4 +1,4 @@
-﻿# Preflight Verification Script
+# Preflight Verification Script
 # Verifies environment, toolchains, git SHAs, and prerequisites
 
 $ErrorActionPreference = "Stop"

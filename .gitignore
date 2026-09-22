@@ -29,3 +29,6 @@ Thumbs.db
 /bin/
 /dist/
 static/
+
+# Proxy dynamic UI
+config/cliproxy/static/

@@ -1,4 +1,4 @@
-﻿# Codex Configuration Template for CLIProxyAPI Routing
+# Codex Configuration Template for CLIProxyAPI Routing
 # Used by both Orchestrator (GPT) and Workers (Gemini) through Codex CLI harness
 
 model_provider = "cliproxy"

@@ -15,8 +15,8 @@ This roadmap defines the single authoritative execution sequence for the multi-a
 | **Phase 4** | Codex Harness Runtime Proof | **BLOCKED** *(P3)* | Gates 5, 6 (Codex -> Astra, Codex -> Gemini Tool Loop) |
 | **Phase 5** | AO Runtime Proof | **BLOCKED** *(P4)* | Gates 7, 8, 9 (Real Orchestrator, Real Worker, Rework Loop) |
 | **Phase 6** | 3-Worker Concurrency Proof | **BLOCKED** *(P5)* | Gate 10 (Real 3-Worker Concurrency Wave) |
-| **Phase 7** | Pool Expansion & Concurrency Hardening | **DEFERRED** *(P6)* | Scale to 6 Plus + 8 Pro accounts; evaluate 5–7 workers |
-| **Phase 8** | Product Integration | **NOT AUTHORIZED** | Apply workforce to `AI-Auto-Video-Creator` tasks |
+| **Phase 7** | First Real Product Workload | **NOT AUTHORIZED** | Apply workforce to `AI-Auto-Video-Creator` tasks (requires explicit user authorization) |
+| **Phase 8** | Capacity Expansion & Hardening | **DEFERRED / OPTIONAL** | Scale toward 6 Plus + 8 Pro; evaluate 5–7 workers when workload demands |
 
 ---
 
@@ -80,14 +80,20 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 - **Required Work**: Execute Gate 10 (parallel 3-worker wave).
 - **Exit Criteria**: 3 live workers execute in parallel across separate git worktrees without race conditions, token starvation, or session crashes.
 - **Evidence Required**: Parallel session execution logs and worktree integrity verification.
-- **Explicit Non-Goals**: Do not claim 5 or 7 workers until Phase 7.
+- **Explicit Non-Goals**: Do not claim 5 or 7 workers until Phase 8 (Capacity Expansion).
 
-### Phase 7: Pool Expansion & Concurrency Hardening (DEFERRED)
-- **Objective**: Scale account pool to full target (6 Plus + 8 Pro) and test higher worker concurrency (5–7 workers).
-- **Entry Criteria**: Phase 6 complete.
-- **Explicit Non-Goals**: Deferred until 3-worker wave is empirically proven.
+### Phase 7: First Real Product Workload (NOT AUTHORIZED)
+- **Objective**: Deploy the multi-agent workforce to implementation tasks in `AI-Auto-Video-Creator`.
+- **Entry Criteria**: Phase 6 complete (Gate 10 passed) AND explicit user authorization changing product milestone boundaries (`INV-001`). Minimal credentials sufficient for runtime gates (Phase 2 onward) already satisfy the auth requirement; full pool expansion is NOT a prerequisite for starting product workload.
+- **Required Work**: Register `AI-Auto-Video-Creator` as an AO project (`ao project add --path`), configure roles, and execute at least one orchestrator-directed worker task producing a verified commit.
+- **Exit Criteria**: At least one complete orchestrator→worker→review cycle produces a merged or reviewable commit in the product repository.
+- **Evidence Required**: AO session logs, worktree diff, commit hash in product repo.
+- **Status**: Strictly **NOT AUTHORIZED**. `INV-001` remains in effect; P8/P9 `LOCKED`; M3 / Module A `NOT AUTHORIZED`.
 
-### Phase 8: Product Integration (NOT AUTHORIZED)
-- **Objective**: Deploy multi-agent workforce to implementation tasks in `AI-Auto-Video-Creator`.
-- **Entry Criteria**: Phase 6 & Phase 7 complete; explicit user authorization changing milestone boundaries (`INV-001`).
-- **Status**: Strictly **NOT AUTHORIZED**.
+### Phase 8: Capacity Expansion & Hardening (DEFERRED / OPTIONAL)
+- **Objective**: Scale account pool toward full target (6 Plus + 8 Pro) and evaluate higher worker concurrency (5–7 workers) when workload demands it.
+- **Entry Criteria**: Phase 7 complete or in-progress AND runtime evidence shows current credential/worker count is insufficient for workload throughput.
+- **Required Work**: Add credentials through the interactive login procedure in [06-OPERATIONS.md](06-OPERATIONS.md) when runtime evidence demonstrates that current capacity is insufficient; verify counts after each login with `scripts/auth-inventory.ps1`. To prove higher concurrency (5 or 7 workers), run real AO worker sessions in parallel across separate worktrees—not `scripts/stress-workers.ps1`, which tests only git worktree primitives.
+- **Exit Criteria**: Prove the capacity level actually deployed: record the maximum number of live concurrent AO worker sessions that completed successfully. Reaching full 6+8 pool or 5–7 workers is not required if the workload does not demand it.
+- **Evidence Required**: AO session logs for each concurrent worker wave, worktree integrity verification, and auth inventory snapshot confirming credential counts at time of test.
+- **Status**: **DEFERRED / OPTIONAL**. Full 6+8 pool is NOT a prerequisite for Candidate A acceptance or for starting product workload.

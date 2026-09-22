@@ -2,7 +2,9 @@
 
 ## 1. Original Project Intent
 
-The primary objective of this integration is to establish a practical, reliable, multi-agent software-development workforce around **Agent Orchestrator (AO)**, utilizing **CLIProxyAPI** as a local routing gateway and **Codex CLI** as a unified agent client harness:
+The primary objective of this integration is to establish a practical, reliable, multi-agent software-development workforce (control plane) around **Agent Orchestrator (AO)**, utilizing **CLIProxyAPI** as a local routing gateway and **Codex CLI** as a unified agent client harness.
+
+This repository (`agents-coworkers`) is the reusable workforce/control plane: it contains integration configs, patches, runbooks, and verification infrastructure that are independent of any single product codebase. **[AI-Auto-Video-Creator](https://github.com/trungqwe/AI-Auto-Video-Creator)** is the first intended product workload (currently `READ-ONLY` per `INV-001`; workload deployment requires explicit user authorization).
 
 - **Orchestrator Role**: Plans, reviews, audits, and issues directives using `gpt-6-astra` (reasoning effort: `low`, harness: `codex`, kind: `orchestrator`, mode: `chat`).
 - **Worker Roles**: Concurrently implement tasks in isolated git worktrees using `gemini-3.8-flash-high` (reasoning effort: `low`, harness: `codex`, kind: `worker`, mode: `chat`).
@@ -46,7 +48,7 @@ The following invariants must be preserved across all implementations, tests, an
 - **Not** designing or benchmarking hypothetical 7-worker scaling before a 3-worker wave is empirically proven.
 - **Not** supporting every available LLM provider or harness in this repository.
 - **Not** building an expansive general-purpose test framework beyond targeted integration verification.
-- **Not** modifying product source in `AI-Auto-Video-Creator` until its authorization boundaries change.
+- **Not** modifying product source in `AI-Auto-Video-Creator` until explicit user authorization changes its milestone boundaries. The workforce is designed to serve this workload once authorized, not after full pool expansion.
 - **Not** using multiple credentials to evade provider terms of service, quotas, or rate limits. Accounts are used solely for authorized availability and distribution within provider terms.
 
 ---

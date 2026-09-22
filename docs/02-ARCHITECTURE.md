@@ -39,8 +39,8 @@ CLIProxyAPI Gateway (127.0.0.1:8317)
 | **Agent Orchestrator (AO)** | Projects, sessions, git worktree lifecycle, role configuration, process supervision, session isolation. | Does not implement LLM translation or provider OAuth token refresh. |
 | **Codex CLI** | Local agent harness execution, tool loop (read, edit, execute), Responses API client behavior. | Does not manage multi-agent worktrees or project-level delegation. |
 | **CLIProxyAPI** | Local proxy gateway (`127.0.0.1:8317`), model catalog `/v1/models`, Responses translation, credential pool management, round-robin routing, failover. | Does not execute git commands or manage file worktrees. |
-| **Integration Repo (`agents-coworkers`)** | Locked upstream references, integration configs, regression tests, minimal compatibility patches, runbooks, technical backbone. | Does not host product source code. |
-| **Product Repo (`AI-Auto-Video-Creator`)** | Production application codebase. Strictly **READ-ONLY** (`INV-001`). | Has no knowledge of AO or CLIProxyAPI integration details. |
+| **Integration Repo (`agents-coworkers`)** | Reusable workforce control plane: locked upstream references, integration configs, regression tests, minimal compatibility patches, runbooks, technical backbone. AO operates on the product repo through projects, sessions, and worktrees; product source lives in the product repo, not here. | Does not host product source code. Product application has no runtime dependency on workforce infrastructure. |
+| **Product Repo (`AI-Auto-Video-Creator`)** | Production application codebase and first intended workload target. Strictly **READ-ONLY** (`INV-001`) until explicit user authorization changes milestone boundaries. AO accesses it via `ao project add --path` which creates worktrees for sessions. | Has no knowledge of, and no runtime dependency on, AO, CLIProxyAPI, or agents-coworkers infrastructure. |
 
 ---
 

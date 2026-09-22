@@ -1,6 +1,6 @@
 # Sanitized Auth Inventory for CLIProxyAPI
 # Scans ~/.cli-proxy-api for credentials and reports counts and sanitized IDs.
-# NEVER prints tokens, keys, passwords, raw filenames, emails, or raw secrets.
+# NEVER prints tokens, keys, passwords, raw filenames, emails, usernames, full paths, or raw secrets.
 
 param (
     [string]$AuthDir = $(
@@ -14,10 +14,11 @@ param (
 $ErrorActionPreference = "Stop"
 
 Write-Host "=== CLIProxyAPI Sanitized Auth Inventory ===" -ForegroundColor Cyan
-Write-Host "Auth Directory: $AuthDir"
+$dirExists = Test-Path $AuthDir
+Write-Host "Auth Directory Status: $(if ($dirExists) { 'configured (available)' } else { 'not found' })"
 
-if (-not (Test-Path $AuthDir)) {
-    Write-Warning "Auth directory does not exist: $AuthDir"
+if (-not $dirExists) {
+    Write-Warning "Auth directory is not initialized or does not exist."
     exit 0
 }
 
@@ -80,7 +81,7 @@ if ($inventory.Count -gt 0) {
     Write-Host "`nCredential Inventory (Sanitized - No PII/Preimages):" -ForegroundColor Yellow
     $inventory | Format-Table ProviderType, CredentialHash, LastModified -AutoSize
 } else {
-    Write-Host "`nNo credential files currently found in $AuthDir." -ForegroundColor Gray
+    Write-Host "`nNo credential files currently found." -ForegroundColor Gray
 }
 
 Write-Host "`nStatus:" -ForegroundColor Cyan

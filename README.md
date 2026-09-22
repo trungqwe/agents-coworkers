@@ -75,7 +75,7 @@ Do NOT rely on process exit codes alone. CLIProxyAPI login functions have intern
   - `Success message BUT count unchanged` -> Existing credential updated / possible repeated identity (e.g. logging into the same Google account again updates `antigravity-<email>.json`). This does NOT increment account pool capacity.
 - **Target Counts**: Codex: 6 distinct accounts, Antigravity: 8 distinct accounts.
 - **Privacy & Safety**:
-  - `auth-inventory.ps1` outputs only safe identifiers (`ProviderType`, `CredentialHash`, `LastModified`). It NEVER dumps raw filenames, emails, account IDs, or token contents.
+  - `auth-inventory.ps1` outputs only safe identifiers (`ProviderType`, `CredentialHash`, `LastModified`). It NEVER dumps raw filenames, emails, account IDs, full paths, or token contents.
   - Never commit, share, or publish identity-bearing filenames or credential files.
 
 ### Step 3: Launch CLIProxyAPI Gateway
@@ -110,6 +110,17 @@ Upstream AO is kept clean at `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`.
 
    **Direct Daemon REST Example**:
    ```powershell
+   # Dynamically discover daemon port from running.json handshake (default upstream port is 3001, but running.json is authoritative)
+   $runFile = if ($env:AO_RUN_FILE) { $env:AO_RUN_FILE } else { Join-Path $HOME ".ao\running.json" }
+   if (-not (Test-Path $runFile)) { throw "AO daemon run file not found: $runFile. Start the AO daemon first." }
+   $runInfo = Get-Content $runFile -Raw | ConvertFrom-Json
+   if (-not $runInfo.port) { throw "AO running.json does not contain a valid daemon port." }
+   $aoBase = "http://127.0.0.1:$($runInfo.port)"
+   $projectId = "<PROJECT_ID>"
+
+   # Optional daemon sanity check
+   Invoke-RestMethod -Uri "$aoBase/healthz" -Method Get
+
    $body = @'
    {
      "config": {
@@ -132,15 +143,24 @@ Upstream AO is kept clean at `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`.
      }
    }
    '@
-   Invoke-RestMethod -Uri "http://127.0.0.1:23456/api/v1/projects/<PROJECT_ID>/config" -Method Put -Body $body -ContentType "application/json"
+
+   Invoke-RestMethod `
+     -Uri "$aoBase/api/v1/projects/$projectId/config" `
+     -Method Put `
+     -Body $body `
+     -ContentType "application/json"
+
+   $project = Invoke-RestMethod `
+     -Uri "$aoBase/api/v1/projects/$projectId" `
+     -Method Get
    ```
 
 2. **Verify Configuration**:
-   Query daemon REST API `GET /api/v1/projects/<PROJECT_ID>` and assert under `project.config`:
-   - `orchestrator.agentConfig.model == "gpt-6-astra"`
-   - `orchestrator.agentConfig.effort == "low"`
-   - `worker.agentConfig.model == "gemini-3.8-flash-high"`
-   - `worker.agentConfig.effort == "low"`
+   Assert the four values under `$project.config`:
+   - `$project.config.orchestrator.agentConfig.model == "gpt-6-astra"`
+   - `$project.config.orchestrator.agentConfig.effort == "low"`
+   - `$project.config.worker.agentConfig.model == "gemini-3.8-flash-high"`
+   - `$project.config.worker.agentConfig.effort == "low"`
 
 3. **Spawn Sessions** (Omit `--effort` flag; session inherits role config):
    ```powershell

@@ -80,7 +80,7 @@ try {
     if (-not $hasAstra -or -not $hasGemini) {
         Write-Warning "[BLOCKED_RUNTIME_AUTH] Required target models are absent from the active catalog. Check auth inventory, model registration, and provider routing."
         if (-not $AllowUnauthenticated) {
-            Write-Error "FAIL-CLOSED: Target models missing from catalog (gpt-6-astra=$hasAstra, gemini-3.8-flash-high=$hasGemini). Complete OAuth login first."
+            Write-Error "FAIL-CLOSED: Required target models are missing from the active catalog (gpt-6-astra=$hasAstra, gemini-3.8-flash-high=$hasGemini). Check auth inventory, provider registration, model catalog, and routing."
             exit 1
         }
     } else {

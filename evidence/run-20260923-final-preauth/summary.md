@@ -14,10 +14,10 @@
 2. **Critical Findings & Verifications**:
    - **Zero-Patch CLI Effort Loss**: Proved that unpatched upstream AO CLI mirror struct `agentConfig` lacks `Effort`, silently dropping reasoning effort when using `ao project set-config --config-json`.
    - **Path Separation**:
-     - **Path A (Zero Patch)**: Desktop UI / daemon REST (`PUT /api/v1/projects/<PROJECT_ID>/config`) configuration preserves effort natively; CLI `ao spawn` omits `--effort` and inherits from role config. Verified via read-back `GET /api/v1/projects/<PROJECT_ID>` asserting `project.config`.
+     - **Path A (Zero Patch)**: Desktop UI / daemon REST (`PUT /api/v1/projects/<PROJECT_ID>/config`) configuration preserves effort natively; CLI `ao spawn` omits `--effort` and inherits from role config. Verified via read-back `GET /api/v1/projects/<PROJECT_ID>` asserting `projectResponse.project.config` (where response envelope is `{ "status": "ok", "project": { "config": { ... } } }`).
      - **Path B (Headless CLI)**: Applying `0001-cli-support-agent-effort.patch` fixes both `ao project set-config --config-json` and `ao spawn --effort`, verified via regression test `TestProjectSetConfig_ConfigJSON_PreservesEffort`.
    - **Pre-Auth Failure Hardened**: `smoke-codex-through-proxy.ps1 -ExpectAuthBlocked` requires exact unauthenticated gateway failure signature (`model_not_found` / `unknown provider for model`). Unrelated errors remain FAIL.
-   - **Sanitized Auth Inventory**: `scripts/auth-inventory.ps1` safely monitors credential accumulation without ever printing secrets, raw filenames, emails, or preimages.
+   - **Sanitized Auth Inventory**: `scripts/auth-inventory.ps1` safely monitors credential accumulation without ever printing secrets, raw filenames, emails, full paths, or preimages.
    - **Raw Evidence Logs**: Stored dedicated per-command `.stdout.txt` and `.stderr.txt` files under `raw_logs/`.
 
 3. **Evidence Base Commit Semantics**:

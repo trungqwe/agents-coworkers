@@ -52,7 +52,7 @@ At upstream commit `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`, `backend/internal
   - `TestHeadlessPatch_PatchedAgentConfigPreservesEffort` proves that adding `Effort` preserves effort values.
   - `TestProjectSetConfig_ConfigJSON_PreservesEffort` in `patches/agent-orchestrator/0001-cli-support-agent-effort.patch` inspects the HTTP request body and verifies `effort == "low"` for both roles.
 - **Architectural Solution**: Completely split the workflow into:
-  - **Path A (Zero Patch)**: Configure role model & effort via Desktop UI or REST API (`PUT /api/v1/projects/<PROJECT_ID>/config`). Omit `--effort` from `ao spawn`. Read back and assert values under `project.config` via `GET /api/v1/projects/<PROJECT_ID>`.
+  - **Path A (Zero Patch)**: Configure role model & effort via Desktop UI or REST API (`PUT /api/v1/projects/<PROJECT_ID>/config`). Omit `--effort` from `ao spawn`. Read back and assert values under `projectResponse.project.config` via `GET /api/v1/projects/<PROJECT_ID>` (response envelope `{ "status": "ok", "project": { "config": { ... } } }`).
   - **Path B (Headless CLI)**: Apply minimal patch `0001-cli-support-agent-effort.patch`, test, rebuild CLI, then use `ao project set-config --config-json` and `ao spawn --effort`.
 
 ### B. Decision Status & Concurrency Target
@@ -68,7 +68,7 @@ At upstream commit `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`, `backend/internal
 
 ### D. Sanitized Auth Inventory Tool
 - Created `scripts/auth-inventory.ps1`:
-  - Never prints tokens, secrets, keys, raw filenames, or user emails.
+  - Never prints tokens, secrets, keys, raw filenames, full paths, or user emails.
   - Reports credential counts (Target: 6 Codex, 8 Antigravity).
   - Uses portable auth directory detection (`$env:CLIPROXY_AUTH_DIR`, `$env:USERPROFILE`, `$HOME`).
   - Reports safe truncated SHA-256 identifier hashes without preimages.

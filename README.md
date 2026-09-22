@@ -149,18 +149,39 @@ Upstream AO is kept clean at `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`.
      -Method Put `
      -Body $body `
      -ContentType "application/json"
-
-   $project = Invoke-RestMethod `
-     -Uri "$aoBase/api/v1/projects/$projectId" `
-     -Method Get
    ```
 
 2. **Verify Configuration**:
-   Assert the four values under `$project.config`:
-   - `$project.config.orchestrator.agentConfig.model == "gpt-6-astra"`
-   - `$project.config.orchestrator.agentConfig.effort == "low"`
-   - `$project.config.worker.agentConfig.model == "gemini-3.8-flash-high"`
-   - `$project.config.worker.agentConfig.effort == "low"`
+   The daemon endpoint `GET /api/v1/projects/<id>` returns a response envelope `{ "status": "ok", "project": { "config": { ... } } }`. Verify model and effort fail-closed:
+   ```powershell
+   $projectResponse = Invoke-RestMethod `
+     -Uri "$aoBase/api/v1/projects/$projectId" `
+     -Method Get
+
+   if ($projectResponse.status -ne "ok") {
+     throw "AO project read-back failed or returned degraded status: $($projectResponse.status)"
+   }
+
+   $config = $projectResponse.project.config
+   if (-not $config) {
+     throw "AO project read-back did not contain project.config"
+   }
+
+   if ($config.orchestrator.agentConfig.model -ne "gpt-6-astra") {
+     throw "Unexpected orchestrator model: $($config.orchestrator.agentConfig.model)"
+   }
+   if ($config.orchestrator.agentConfig.effort -ne "low") {
+     throw "Unexpected orchestrator effort: $($config.orchestrator.agentConfig.effort)"
+   }
+   if ($config.worker.agentConfig.model -ne "gemini-3.8-flash-high") {
+     throw "Unexpected worker model: $($config.worker.agentConfig.model)"
+   }
+   if ($config.worker.agentConfig.effort -ne "low") {
+     throw "Unexpected worker effort: $($config.worker.agentConfig.effort)"
+   }
+
+   Write-Host "[PASS] AO role model/effort configuration read-back verified."
+   ```
 
 3. **Spawn Sessions** (Omit `--effort` flag; session inherits role config):
    ```powershell

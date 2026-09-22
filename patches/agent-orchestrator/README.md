@@ -55,7 +55,7 @@ Upstream AO checkout is kept **100% clean** at `1140dd62dc7bb588b987e2c44aa1ff47
 - In CLI invocations (`ao spawn`), omit `--effort`. Sessions inherit effort from project/role configuration.
 - Do NOT use unpatched `ao project set-config --config-json` expecting effort to be preserved.
 - Verify configuration by reading back through daemon REST API `GET /api/v1/projects/<PROJECT_ID>`:
-  Assert under `project.config`:
+  Assert under `projectResponse.project.config` (where response envelope is `{ "status": "ok", "project": { "config": { ... } } }`):
   - `orchestrator.agentConfig.model == "gpt-6-astra"`
   - `orchestrator.agentConfig.effort == "low"`
   - `worker.agentConfig.model == "gemini-3.8-flash-high"`
@@ -85,6 +85,6 @@ If you require fully headless CLI operation with `ao project set-config --config
    $config = Get-Content "D:\TU_CODE\agents-coworkers\config\ao\project-config.example.json" -Raw
    ao project set-config <PROJECT_ID> --config-json $config
    ```
-6. Read back project configuration via `GET /api/v1/projects/<PROJECT_ID>` and assert all four model/effort values under `project.config` survived.
+6. Read back project configuration via `GET /api/v1/projects/<PROJECT_ID>` and assert all four model/effort values under `projectResponse.project.config` survived.
 
 *Note: Do NOT permanently patch upstream until runtime Candidate A requires headless use.*

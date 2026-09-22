@@ -1,0 +1,74 @@
+﻿{
+  "test_suites": [
+    {
+      "name": "AO Codex Adapter",
+      "package": "backend/internal/adapters/agent/codex",
+      "status": "PASS",
+      "duration": "0.336s",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "AO CLI Commands",
+      "package": "backend/internal/cli",
+      "status": "PASS",
+      "duration": "15.685s",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "AO Session Service",
+      "package": "backend/internal/service/session",
+      "status": "PASS",
+      "duration": "cached",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI Antigravity-OpenAI Responses Translator",
+      "package": "internal/translator/antigravity/openai/responses",
+      "status": "PASS",
+      "duration": "0.095s",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI OpenAI Handlers",
+      "package": "sdk/api/handlers/openai",
+      "status": "PASS",
+      "duration": "9.440s",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI Auth Selector & Routing",
+      "package": "sdk/cliproxy/auth",
+      "status": "PASS",
+      "duration": "1.147s",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "CLIProxyAPI Server Runtime & Catalog",
+      "target": "cli-proxy-api.exe",
+      "status": "PASS",
+      "details": "Server started on 127.0.0.1:8317; /v1/models returned 200 OK with dynamic credential filtering verified",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "AO Git Worktree Isolation & Zero Collision",
+      "script": "scripts/smoke-ao.ps1",
+      "status": "PASS",
+      "details": "Multiple external worktrees operated in parallel; main working tree remained 100% clean",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "Worker Concurrency Scaling Waves (1, 3, 5, 7)",
+      "script": "scripts/stress-workers.ps1",
+      "status": "PASS",
+      "details": "1 worker (121ms), 3 workers (373ms), 5 workers (640ms), 7 workers (929ms); zero collisions across all waves",
+      "type": "RUNTIME_PROVEN"
+    },
+    {
+      "name": "Live Upstream Responses Tool Loop (Astra & Gemini)",
+      "target": "POST /v1/responses",
+      "status": "BLOCKED_RUNTIME_AUTH",
+      "details": "0 usable accounts in ~/.cli-proxy-api; blocked on interactive browser OAuth login for the 6+8 pool",
+      "type": "BLOCKED"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+# Secrets and credentials
+*.key
+*.pem
+*.token
+*.jwt
+*.secret
+*auth*.json
+!config/
+!.gitkeep
+.env
+.env.*
+!.env.example
+*.bak
+*.tmp
+
+# Operating system / IDE
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Binaries and build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+/bin/
+/dist/
+static/

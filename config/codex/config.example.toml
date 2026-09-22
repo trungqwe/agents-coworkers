@@ -1,0 +1,16 @@
+﻿# Codex Configuration Template for CLIProxyAPI Routing
+# Used by both Orchestrator (GPT) and Workers (Gemini) through Codex CLI harness
+
+model_provider = "cliproxy"
+model_reasoning_effort = "low"
+model = "gpt-6-astra"
+
+[model_providers.cliproxy]
+name = "CLIProxyAPI Gateway"
+base_url = "http://127.0.0.1:8317/v1"
+wire_api = "responses"
+env_key = "CLIPROXY_KEY"
+
+[features]
+multi_agent = false
+multi_agent_v2 = false

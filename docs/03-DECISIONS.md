@@ -2,7 +2,7 @@
 
 This ledger records architectural decisions, their current validation status, evidence maturity, and revisit triggers.
 
-- **Active Roadmap Phase**: **Phase 6 — 3-Worker Concurrency Proof** (authoritative phase status and exit criteria are maintained in [04-ROADMAP.md](04-ROADMAP.md)).
+- **Active Roadmap Phase**: **Phase 6 — 3-Worker Concurrency Proof (COMPLETE)**; **Phase 7 remains NOT AUTHORIZED**; **Phase 8 remains DEFERRED / OPTIONAL** (authoritative phase status and exit criteria are maintained in [04-ROADMAP.md](04-ROADMAP.md)).
 
 ## Status Definitions
 
@@ -24,10 +24,10 @@ This ledger records architectural decisions, their current validation status, ev
 
 ## Decision Entries
 
-### D001 — Candidate A Provisionally Selected
-- **Decision Status**: `PROVISIONAL`
+### D001 — Candidate A Accepted
+- **Decision Status**: `ACCEPTED`
 - **Evidence Maturity**: `LIVE_RUNTIME`
-- **Decision**: Select Candidate A (AO Orchestrator `gpt-6-astra` + AO Workers `gemini-3.8-flash-high`, unified Codex harness via CLIProxyAPI gateway) for runtime verification.
+- **Decision**: Adopt Candidate A (AO Orchestrator `gpt-6-astra` + AO Workers `gemini-3.8-flash-high`, unified Codex harness via CLIProxyAPI gateway) as the accepted architectural baseline (empirically validated across Gates 1–10).
 - **Reason**: Maximizes harness uniformity, minimizes client diversity, and leverages existing provider pools.
 - **Evidence**: Source inspection of AO Codex adapter, CLIProxyAPI translators, schema tests.
 - **Revisit Trigger**: Revisit Candidate A only after a runtime gate has an unresolved, reproducible failure that has been root-cause isolated to a Candidate A architectural boundary. Configuration mistakes, authentication mistakes, transient provider errors, or unrelated local failures are not architecture-revisit triggers. Candidate B/C must remain dormant until such a failure is proven.
@@ -74,11 +74,11 @@ This ledger records architectural decisions, their current validation status, ev
 
 ### D007 — Worker Concurrency Target Starts at 3, Not 7
 - **Decision Status**: `ACCEPTED`
-- **Evidence Maturity**: `LOCAL_RUNTIME`
-- **Decision**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN (`INV-005`).
-- **Reason**: Live multi-agent concurrency on this stack is unproven. Claiming 7 workers without empirical proof violates runtime verification principles.
-- **Evidence**: Filesystem worktree scaling verified at local runtime; live session concurrency pending Gate 10.
-- **Revisit Trigger**: Successful execution of Gate 10 (3-worker wave) unblocks testing 5 and 7 workers.
+- **Evidence Maturity**: `LIVE_RUNTIME`
+- **Decision**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: 3 (`INV-005`).
+- **Reason**: Live multi-agent concurrency on this stack is proven for 3 simultaneous workers. Claiming 7 workers without empirical proof violates runtime verification principles.
+- **Evidence**: Live runtime concurrent execution verified in Gate 10 across 3 isolated git worktrees with 38.848216s simultaneous running overlap.
+- **Revisit Trigger**: Revisit only upon capacity expansion under Phase 8 when workload demands require evaluating 5 to 7 concurrent workers.
 
 ### D008 — OpenCode and Agy as Dormant Fallbacks
 - **Decision Status**: `ACCEPTED`

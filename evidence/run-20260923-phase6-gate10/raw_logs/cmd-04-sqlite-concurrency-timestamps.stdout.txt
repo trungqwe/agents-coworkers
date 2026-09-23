@@ -1,0 +1,35 @@
+[Command 4: SQLite Turn Records & Overlap Window Calculation]
+Database: C:\Users\[REDACTED_USER]\.ao\data\ao.db
+Table: conversation_turns
+
+1. Worker 1 (ao-phase5-repo-12):
+   - Turn ID: 1972cf0a-48a7-49d2-b007-ce0cd56d2ab7
+   - State: completed
+   - Requested At: 2026-09-23 00:48:44.8574856 +0000 UTC
+   - Started At:   2026-09-23 00:48:44.8746861 +0000 UTC
+   - Completed At: 2026-09-23 00:49:26.1516501 +0000 UTC
+   - Execution Duration (completed - started): 41.276964s
+
+2. Worker 2 (ao-phase5-repo-13):
+   - Turn ID: 0590372c-8b64-4f44-9d1c-bc2eaaebf776
+   - State: completed
+   - Requested At: 2026-09-23 00:48:46.0549454 +0000 UTC
+   - Started At:   2026-09-23 00:48:46.0743925 +0000 UTC
+   - Completed At: 2026-09-23 00:49:40.2305603 +0000 UTC
+   - Execution Duration (completed - started): 54.156168s
+
+3. Worker 3 (ao-phase5-repo-14):
+   - Turn ID: 6be39b64-a988-410d-8600-f88b7eb2d91f
+   - State: completed
+   - Requested At: 2026-09-23 00:48:47.2840877 +0000 UTC
+   - Started At:   2026-09-23 00:48:47.3034343 +0000 UTC
+   - Completed At: 2026-09-23 00:49:29.0850985 +0000 UTC
+   - Execution Duration (completed - started): 41.781664s
+
+Overlap Window Calculation (started_at -> completed_at):
+- Start of overlap: max(started_at)   = 2026-09-23 00:48:47.3034343 UTC
+- End of overlap  : min(completed_at) = 2026-09-23 00:49:26.1516501 UTC
+- Overlap Window  : [2026-09-23 00:48:47.3034343 UTC – 2026-09-23 00:49:26.1516501 UTC]
+- Overlap Duration: 38.848216 seconds
+- Scope of Proof: 3 AO worker turns were concurrently in SQLite state 'running'.
+  (Affirms concurrent AO turn orchestration; does not assert 3 simultaneous in-flight HTTP requests at gateway.)

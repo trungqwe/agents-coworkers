@@ -14,7 +14,7 @@ This roadmap defines the single authoritative execution sequence for the multi-a
 | **Phase 3** | Direct Provider Runtime Proof | **COMPLETE** | Gates 1, 2, 3, 4 (Catalog, Astra, Gemini, Tool Roundtrip) |
 | **Phase 4** | Codex Harness Runtime Proof | **COMPLETE** | Gates 5, 6 (Codex -> Astra, Codex -> Gemini Tool Loop) |
 | **Phase 5** | AO Runtime Proof | **COMPLETE** | Gates 7, 8, 9 (Real Orchestrator, Real Worker, Rework Loop) |
-| **Phase 6** | 3-Worker Concurrency Proof | **NEXT** | Gate 10 (Real 3-Worker Concurrency Wave) |
+| **Phase 6** | 3-Worker Concurrency Proof | **COMPLETE** | Gate 10 (Real 3-Worker Concurrency Wave) |
 | **Phase 7** | First Real Product Workload | **NOT AUTHORIZED** | Apply workforce to `AI-Auto-Video-Creator` tasks (requires explicit user authorization) |
 | **Phase 8** | Capacity Expansion & Hardening | **DEFERRED / OPTIONAL** | Scale toward 6 Plus + 8 Pro; evaluate 5–7 workers when workload demands |
 
@@ -22,7 +22,7 @@ This roadmap defines the single authoritative execution sequence for the multi-a
 
 ## 2. Canonical 10 Runtime Verification Gates
 
-Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential verification of all 10 gates:
+Candidate A has transitioned from `PROVISIONAL` to `ACCEPTED` following sequential verification of all 10 canonical gates:
 
 1. **Gate 1: CLIProxy Catalog**: `GET /v1/models` contains both `gpt-6-astra` and `gemini-3.8-flash-high`. (**VERIFIED - L5**)
 2. **Gate 2: Direct Astra Responses**: Successful non-stream and stream response parsing via CLIProxyAPI gateway. (**VERIFIED - L5**)
@@ -33,7 +33,7 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 7. **Gate 7: Real AO Orchestrator**: Live session launched on Agent Orchestrator with `kind = "orchestrator"`. (**VERIFIED - L6**)
 8. **Gate 8: Real AO Worker**: Live session launched on Agent Orchestrator with `kind = "worker"` using Gemini. (**VERIFIED - L6**)
 9. **Gate 9: AO Rework Loop**: Orchestrator reviews worker worktree output and successfully issues a rework directive. (**VERIFIED - L6**)
-10. **Gate 10: Real 3-Worker Wave**: Three concurrent live worker sessions complete isolated tasks without worktree, locking, or routing failures (verifying initial runtime verification target of 3 workers; maximum proven live concurrency becomes 3 only after this gate passes). (**PENDING - P6**)
+10. **Gate 10: Real 3-Worker Wave**: Three concurrent live worker sessions complete isolated tasks without worktree, locking, or routing failures (verifying initial runtime verification target of 3 workers; maximum proven live concurrency: 3). (**VERIFIED - L7**)
 
 ---
 
@@ -74,11 +74,11 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 - **Evidence Required**: AO daemon session logs and git worktree commit logs.
 - **Explicit Non-Goals**: Do not run concurrent workers yet.
 
-### Phase 6: 3-Worker Concurrency Proof (NEXT ACTION)
-- **Objective**: Prove concurrent multi-agent execution at the initial runtime verification target (3 workers). Target worker range is 3–7; maximum proven live concurrency remains NOT YET PROVEN until Gate 10 passes.
+### Phase 6: 3-Worker Concurrency Proof (COMPLETE)
+- **Objective**: Prove concurrent multi-agent execution at the initial runtime verification target (3 workers). Target worker range is 3–7; maximum proven live concurrency: 3 (verified at runtime in Gate 10).
 - **Entry Criteria**: Phase 5 complete.
 - **Required Work**: Execute Gate 10 (parallel 3-worker wave).
-- **Exit Criteria**: 3 live workers execute in parallel across separate git worktrees without race conditions, token starvation, or session crashes.
+- **Exit Criteria**: 3 live workers execute in parallel across separate git worktrees without race conditions, token starvation, or session crashes (VERIFIED: maximum proven live concurrency = 3).
 - **Evidence Required**: Parallel session execution logs and worktree integrity verification.
 - **Explicit Non-Goals**: Do not claim 5 or 7 workers until Phase 8 (Capacity Expansion).
 

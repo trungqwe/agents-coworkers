@@ -6,8 +6,8 @@
 
 - **Selected Candidate**: **Candidate A** (Unified Codex Client Harness via CLIProxyAPI Gateway)
 - **Architectural Status**: `SOURCE-FEASIBLE`
-- **Runtime Decision**: `PROVISIONALLY SELECTED` (Pending live runtime gates)
-- **Active Roadmap Phase**: **Phase 5 — AO Runtime Proof** (authoritative phase status and exit criteria are maintained in [docs/04-ROADMAP.md](docs/04-ROADMAP.md))
+- **Runtime Decision**: `ACCEPTED` (All 10 Canonical Verification Gates verified at runtime; initial target of 3 live concurrent workers proven)
+- **Active Roadmap Phase**: **Phase 6 — 3-Worker Concurrency Proof (COMPLETE)**; **Phase 7 remains NOT AUTHORIZED**; **Phase 8 remains DEFERRED / OPTIONAL** (authoritative phase status and exit criteria are maintained in [docs/04-ROADMAP.md](docs/04-ROADMAP.md))
 
 ---
 
@@ -15,7 +15,7 @@
 
 - **Orchestrator**: `gpt-6-astra` (effort: `low`, harness: `codex`, kind: `orchestrator`, mode: `chat`)
 - **Workers**: `gemini-3.8-flash-high` (effort: `low`, harness: `codex`, kind: `worker`, mode: `chat`)
-- **Target Worker Range**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN
+- **Target Worker Range**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: 3 (empirically proven in Gate 10 with 3 concurrent workers, 38.848216s overlap)
 - **Gateway**: CLIProxyAPI on `127.0.0.1:8317` managing ChatGPT Plus (6 accounts target) and Gemini Pro (8 accounts target) pools.
 
 ---

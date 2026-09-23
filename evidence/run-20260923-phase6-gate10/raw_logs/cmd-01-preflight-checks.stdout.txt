@@ -1,0 +1,8 @@
+[Command 1: Preflight Verification - Invariants, Baseline & Auth Inventory]
+Baseline Git SHA in agents-coworkers : 1553766e0fae0c3209a2f5c4ef36bb574fbc1449 (clean)
+INV-001 Product Repo (AI Auto Video Creator): 4a7c8c921b7e05066505d51b168a02c3fde61317 (clean)
+INV-002 Upstream AO (agent-orchestrator)    : clean, zero binary patch
+Auth Inventory:
+  Codex (ChatGPT Plus) : 1 (Target: 6)
+  Antigravity (Gemini) : 1 (Target: 8)
+  Status: [PARTIAL_AUTH] In-progress: Codex 1/6, Antigravity 1/8. Exactly 1+1 available.

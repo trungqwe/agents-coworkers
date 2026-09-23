@@ -1,0 +1,21 @@
+{
+  "phase": "Phase 6 \u2014 3-Worker Concurrency Proof",
+  "baseline_git_sha": "1553766e0fae0c3209a2f5c4ef36bb574fbc1449",
+  "gate": {
+    "gate_number": 10,
+    "name": "Real 3-Worker Concurrency Wave",
+    "target_model": "gemini-3.8-flash-high",
+    "target_effort": "low",
+    "target_concurrency": 3,
+    "sessions_involved": [
+      "ao-phase5-repo-12",
+      "ao-phase5-repo-13",
+      "ao-phase5-repo-14"
+    ],
+    "result": "PASS",
+    "verification_tier": "L7",
+    "evidence": "3 real AO worker sessions executed simultaneously across isolated git worktrees. SQLite timestamps prove all 3 turns running simultaneously for 38.848216 seconds overlap [2026-09-23 00:48:47.3034343 UTC \u2013 2026-09-23 00:49:26.1516501 UTC]. 3 distinct commits (54a4c7c54dd25ec880f6c8dd55a730a56777aac5, 4b3b8318575bca43183d1c5e014f874d83b7d5bd, d4c98275c1fa929d8fc8a7e4534f58a323a81481) created without file collisions or locking errors.",
+    "maximum_proven_live_concurrency": 3
+  },
+  "candidate_a_evaluation_status": "ACCEPTED"
+}

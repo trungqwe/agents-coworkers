@@ -8,7 +8,7 @@ This repository (`agents-coworkers`) is the reusable workforce/control plane: it
 
 - **Orchestrator Role**: Plans, reviews, audits, and issues directives using `gpt-6-astra` (reasoning effort: `low`, harness: `codex`, kind: `orchestrator`, mode: `chat`).
 - **Worker Roles**: Concurrently implement tasks in isolated git worktrees using `gemini-3.8-flash-high` (reasoning effort: `low`, harness: `codex`, kind: `worker`, mode: `chat`).
-- **Target Scale**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN.
+- **Target Scale**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: 3 (empirically proven in Gate 10).
 - **Core Value Proposition**: Minimize moving parts, eliminate manual coordination overhead, isolate code changes via native git worktrees, prevent merge collisions, and optimize token/context cost.
 
 ---
@@ -34,7 +34,7 @@ The following invariants must be preserved across all implementations, tests, an
 - `INV-002` — **AO Upstream Clean by Default**: Upstream `agent-orchestrator` (`1140dd62dc7bb588b987e2c44aa1ff4796fa732b`) remains unmodified in default operation (Path A).
 - `INV-003` — **Unified Codex Client Harness**: Both orchestrator and worker roles use `agent = "codex"` talking to CLIProxyAPI via Responses-compatible API.
 - `INV-004` — **Runtime Proof Outranks Static Inference**: No gate, candidate, or capability is marked verified based on code reading or static tests alone.
-- `INV-005` — **Concurrency Target Starts at 3**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: NOT YET PROVEN until Gate 10 passes.
+- `INV-005` — **Concurrency Target Starts at 3**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: 3 (empirically proven in Gate 10 across isolated worktrees).
 - `INV-006` — **Fail-Closed Daemon Discovery**: If multiple live AO daemons exist, scripts fail closed instead of guessing.
 - `INV-007` — **Zero PII & Secret Leakage**: No tokens, private keys, passwords, user emails, raw account filenames, or OS usernames are printed or committed.
 

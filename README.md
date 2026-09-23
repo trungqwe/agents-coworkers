@@ -28,7 +28,7 @@ Agent Orchestrator
 |
 +-- Orchestrator:  gpt-6-astra (effort: low, harness: codex, kind: orchestrator)
 +-- Workers:       gemini-3.8-flash-high (effort: low, harness: codex, kind: worker)
-|                  Target worker range: 3–7 | Initial runtime verification target: 3 | Maximum proven live concurrency: NOT YET PROVEN
+|                  Target worker range: 3–7 | Initial runtime verification target: 3 | Maximum proven live concurrency: 3
 |
 +--> CLIProxyAPI Gateway (127.0.0.1:8317)
        +-- 6x ChatGPT Plus accounts -> gpt-6-astra
@@ -86,7 +86,7 @@ See [docs/06-OPERATIONS.md](docs/06-OPERATIONS.md) for complete dynamic daemon d
 
 ## 5. Runtime Acceptance
 
-Candidate A remains `PROVISIONAL` until the canonical 10 runtime verification gates pass.
+Candidate A is **ACCEPTED** following sequential runtime verification of all 10 canonical gates (Gates 1–10). Maximum proven live concurrency is **3** (Phase 6 COMPLETE). Phase 7 (Product Workload) remains **NOT AUTHORIZED** pending explicit user authorization; Phase 8 (Capacity Expansion) remains **DEFERRED / OPTIONAL**.
 
 See:
 - [Canonical Roadmap & Runtime Gates](docs/04-ROADMAP.md)

@@ -1,0 +1,15 @@
+[Command 2: AO Daemon Discovery & Model Profile Readback]
+INV-006 Loopback Probe (GET http://127.0.0.1:3001/healthz):
+{
+  "executablePath": "D:\TU_CODE\agent-orchestrator\backend\ao.exe",
+  "pid": 39332,
+  "service": "agent-orchestrator-daemon",
+  "startupWorkingDirectory": "D:\TU_CODE\agents-coworkers",
+  "status": "ok",
+  "workingDirectory": "C:\Users\[REDACTED_USER]\.ao\data"
+}
+Active Daemons: 1 (PID 39332). Fail-closed policy satisfied.
+
+Model Profile Readback (GET http://127.0.0.1:3001/api/v1/projects/ao-phase5-repo):
+- orchestrator: agent=codex, model=gpt-6-astra, effort=low
+- worker      : agent=codex, model=gemini-3.8-flash-high, effort=low (with payload.override)

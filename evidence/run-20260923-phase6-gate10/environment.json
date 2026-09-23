@@ -1,0 +1,82 @@
+{
+  "execution_window": "2026-09-23T07:48:00+07:00 \u2013 2026-09-23T07:50:00+07:00",
+  "baseline_git_sha": "1553766e0fae0c3209a2f5c4ef36bb574fbc1449",
+  "ao_daemon": {
+    "port": 3001,
+    "pid": 39332,
+    "path": "D:\\TU_CODE\\agent-orchestrator\\backend\\ao.exe",
+    "data_dir": "C:\\Users\\[REDACTED_USER]\\.ao\\data",
+    "database": "C:\\Users\\[REDACTED_USER]\\.ao\\data\\ao.db"
+  },
+  "cliproxy_gateway": {
+    "port": 8317,
+    "auth": "bearer_private_key",
+    "override_active": true,
+    "override_target": "gemini-*"
+  },
+  "concurrent_workers": [
+    {
+      "session_id": "ao-phase5-repo-12",
+      "name": "Concur-W1",
+      "model": "gemini-3.8-flash-high",
+      "effort": "low",
+      "turn_id": "1972cf0a-48a7-49d2-b007-ce0cd56d2ab7",
+      "requested_at": "2026-09-23 00:48:44.8574856 +0000 UTC",
+      "started_at": "2026-09-23 00:48:44.8746861 +0000 UTC",
+      "completed_at": "2026-09-23 00:49:26.1516501 +0000 UTC",
+      "duration_seconds": 41.276964,
+      "branch": "ao/ao-phase5-repo-12/root",
+      "commit": "54a4c7c54dd25ec880f6c8dd55a730a56777aac5",
+      "file": "fibonacci.py"
+    },
+    {
+      "session_id": "ao-phase5-repo-13",
+      "name": "Concur-W2",
+      "model": "gemini-3.8-flash-high",
+      "effort": "low",
+      "turn_id": "0590372c-8b64-4f44-9d1c-bc2eaaebf776",
+      "requested_at": "2026-09-23 00:48:46.0549454 +0000 UTC",
+      "started_at": "2026-09-23 00:48:46.0743925 +0000 UTC",
+      "completed_at": "2026-09-23 00:49:40.2305603 +0000 UTC",
+      "duration_seconds": 54.156168,
+      "branch": "ao/ao-phase5-repo-13/root",
+      "commit": "4b3b8318575bca43183d1c5e014f874d83b7d5bd",
+      "file": "factorial.py"
+    },
+    {
+      "session_id": "ao-phase5-repo-14",
+      "name": "Concur-W3",
+      "model": "gemini-3.8-flash-high",
+      "effort": "low",
+      "turn_id": "6be39b64-a988-410d-8600-f88b7eb2d91f",
+      "requested_at": "2026-09-23 00:48:47.2840877 +0000 UTC",
+      "started_at": "2026-09-23 00:48:47.3034343 +0000 UTC",
+      "completed_at": "2026-09-23 00:49:29.0850985 +0000 UTC",
+      "duration_seconds": 41.781664,
+      "branch": "ao/ao-phase5-repo-14/root",
+      "commit": "d4c98275c1fa929d8fc8a7e4534f58a323a81481",
+      "file": "prime.py"
+    }
+  ],
+  "concurrency_metrics": {
+    "overlap_start_utc": "2026-09-23 00:48:47.3034343",
+    "overlap_end_utc": "2026-09-23 00:49:26.1516501",
+    "overlap_duration_seconds": 38.848216,
+    "concurrent_live_workers_count": 3,
+    "proof_scope": "SQLite conversation_turns running state overlap across 3 isolated worktrees"
+  },
+  "git_status": {
+    "root_repository": {
+      "path": "C:\\Users\\[REDACTED_USER]\\.ao\\test-fixtures\\ao-phase5-repo",
+      "branch": "main",
+      "commit": "60aa78498d2e5325c96545d73d006e1f10b812a4",
+      "status": "clean"
+    },
+    "worktrees": {
+      "pre_cleanup": "?? __pycache__/ in all 3 worktrees",
+      "cleanup_action": "targeted rmtree on 3 fixture __pycache__ dirs only",
+      "post_cleanup": "clean in all 3 worktrees"
+    }
+  },
+  "candidate_a_status": "ACCEPTED"
+}

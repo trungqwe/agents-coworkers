@@ -11,7 +11,7 @@ Agent Orchestrator
 │   ├── Model: gpt-6-astra
 │   └── Reasoning Effort: low
 │
-├── Worker Sessions (Target worker range: 3–7, initial runtime verification target: 3, maximum proven live concurrency: NOT YET PROVEN)
+├── Worker Sessions (Target worker range: 3–7, initial runtime verification target: 3, maximum proven live concurrency: 3)
 │   ├── Role / Kind: worker
 │   ├── Agent Harness: codex
 │   ├── Model: gemini-3.8-flash-high

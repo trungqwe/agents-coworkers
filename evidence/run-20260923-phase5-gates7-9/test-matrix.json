@@ -1,0 +1,47 @@
+{
+  "phase": "Phase 5 \u2014 AO Runtime Proof",
+  "baseline_git_sha": "e80dc1941763e14c10a5cb0565033674425875a4",
+  "gates": [
+    {
+      "gate": 7,
+      "name": "Real AO Orchestrator",
+      "target_model": "gpt-6-astra",
+      "target_effort": "low",
+      "session_id": "ao-phase5-repo-1",
+      "result": "PASS",
+      "verification_tier": "L6",
+      "evidence": "Orchestrator session completed multi-turn tool execution inspecting calc.py and README.md. Stored in SQLite."
+    },
+    {
+      "gate": 8,
+      "name": "Real AO Worker",
+      "target_model": "gemini-3.8-flash-high",
+      "target_effort": "low",
+      "session_id": "ao-phase5-repo-10",
+      "result": "PASS",
+      "verification_tier": "L6",
+      "evidence": "Worker session executed in isolated worktree with system instruction replaced by payload.override, created commit 666eb5692eedcaf485f7a187815bf04e5b5a1273 (multiply function). Stored in SQLite."
+    },
+    {
+      "gate": 9,
+      "name": "AO Rework Loop",
+      "target_model": "gpt-6-astra (Orch) / gemini-3.8-flash-high (Worker)",
+      "target_effort": "low",
+      "session_id": "ao-phase5-repo-1 (Orch) + ao-phase5-repo-11 (Worker)",
+      "result": "PASS",
+      "verification_tier": "L6",
+      "evidence": "Worker (with system instruction replaced by payload.override) implemented initial divide (ca15efd). Orchestrator reviewed worktree, detected missing zero-divisor guard, and issued directive. Worker reworked code, added ValueError guard and 6 test functions (all 6 passed), and committed a94352f. Orchestrator verified and confirmed satisfaction."
+    },
+    {
+      "gate": 10,
+      "name": "Real 3-Worker Wave",
+      "target_model": "gemini-3.8-flash-high (3 concurrent workers)",
+      "target_effort": "low",
+      "session_id": "N/A",
+      "result": "NOT RUN",
+      "verification_tier": "L7 (PENDING)",
+      "evidence": "Pending Phase 6 execution."
+    }
+  ],
+  "candidate_a_evaluation_status": "PROVISIONAL"
+}

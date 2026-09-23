@@ -2,7 +2,7 @@
 
 This ledger records architectural decisions, their current validation status, evidence maturity, and revisit triggers.
 
-- **Active Roadmap Phase**: **Phase 5 — AO Runtime Proof** (authoritative phase status and exit criteria are maintained in [04-ROADMAP.md](04-ROADMAP.md)).
+- **Active Roadmap Phase**: **Phase 6 — 3-Worker Concurrency Proof** (authoritative phase status and exit criteria are maintained in [04-ROADMAP.md](04-ROADMAP.md)).
 
 ## Status Definitions
 

@@ -1,0 +1,44 @@
+{
+  "execution_window": "2026-09-23T06:33:00+07:00 \u2013 2026-09-23T07:41:00+07:00",
+  "baseline_git_sha": "e80dc1941763e14c10a5cb0565033674425875a4",
+  "ao_daemon": {
+    "port": 3001,
+    "pid": 39332,
+    "path": "D:\\TU_CODE\\agent-orchestrator\\backend\\ao.exe",
+    "data_dir": "C:\\Users\\[REDACTED_USER]\\.ao\\data",
+    "database": "C:\\Users\\[REDACTED_USER]\\.ao\\data\\ao.db"
+  },
+  "cliproxy_gateway": {
+    "port": 8317,
+    "auth": "bearer_private_key",
+    "override_active": true,
+    "override_target": "gemini-*"
+  },
+  "orchestrator_profile": {
+    "agent": "codex",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "low",
+    "session_id": "ao-phase5-repo-1"
+  },
+  "worker_profiles": {
+    "gate8_worker": {
+      "agent": "codex",
+      "model": "gemini-3.8-flash-high",
+      "reasoning_effort": "low",
+      "session_id": "ao-phase5-repo-10",
+      "payload_override_applied": true
+    },
+    "gate9_worker": {
+      "agent": "codex",
+      "model": "gemini-3.8-flash-high",
+      "reasoning_effort": "low",
+      "session_id": "ao-phase5-repo-11",
+      "payload_override_applied": true
+    }
+  },
+  "test_repository": {
+    "path": "C:\\Users\\[REDACTED_USER]\\.ao\\test-fixtures\\ao-phase5-repo",
+    "baseline_commit": "60aa784 chore: initial test project baseline"
+  },
+  "candidate_a_status": "PROVISIONAL"
+}

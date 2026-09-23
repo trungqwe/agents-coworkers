@@ -1,0 +1,18 @@
+[Discovery Probe: 127.0.0.1:3001]
+HTTP/1.1 200 OK
+Content-Type: application/json
+Body:
+{
+  "executablePath": "D:\TU_CODE\agent-orchestrator\backend\ao.exe",
+  "pid": 39332,
+  "service": "agent-orchestrator-daemon",
+  "startupWorkingDirectory": "D:\TU_CODE\agents-coworkers",
+  "status": "ok",
+  "workingDirectory": "C:\Users\[REDACTED_USER]\.ao\data"
+}
+
+Discovery Result:
+- Active daemons discovered: 1
+- PID: 39332
+- Port: 3001
+- Invariant INV-006 (Daemon Fail-Closed Discovery): Exactly 1 daemon found; safe to proceed.

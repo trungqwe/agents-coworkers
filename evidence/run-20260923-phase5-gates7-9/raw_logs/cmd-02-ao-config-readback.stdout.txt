@@ -1,0 +1,20 @@
+[AO Configuration Readback: GET /api/v1/config]
+HTTP/1.1 200 OK
+Content-Type: application/json
+Config Summary:
+{
+  "active_profiles": {
+    "orchestrator": {
+      "agent": "codex",
+      "model": "gpt-6-astra",
+      "reasoning_effort": "low"
+    },
+    "worker": {
+      "agent": "codex",
+      "model": "gemini-3.8-flash-high",
+      "reasoning_effort": "low"
+    }
+  },
+  "gateway_endpoint": "http://127.0.0.1:8317",
+  "execution_path": "Path A (REST API runtime configuration, zero binary patch)"
+}

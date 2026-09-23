@@ -1,0 +1,33 @@
+[Gate 9: Real AO Orchestrator-Driven Rework Loop]
+Note: Worker session executed with system instruction replaced by payload.override (targeting systemInstruction.parts.0.text).
+Worker Session: ao-phase5-repo-11 (gemini-3.8-flash-high, low)
+Orchestrator Session: ao-phase5-repo-1 (gpt-6-astra, low)
+Worktree: C:\Users\[REDACTED_USER]\.ao\data\worktrees\ao-phase5-repo\ao-phase5-repo-11
+Branch: ao/ao-phase5-repo-11/root
+
+1. Initial Implementation (Worker Turn 1):
+- Turn ID: 53e571bb-d4a8-443c-85e0-6d9898eb9fa7 (completed in 82s)
+- Initial Commit: ca15efd feat: add divide function to calc.py
+- Initial Code:
+  def divide(a: int, b: int) -> float:
+      return a / b
+
+2. Orchestrator Inspection & Code Review (Turn 4a1505cf & 21824ee4):
+- Orchestrator inspected worker's worktree at ca15efd and delegated review to review worker.
+- Review finding: divide returns a / b without zero divisor guard, raising unhandled ZeroDivisionError.
+- Orchestrator Rework Directive:
+  "[from ao-phase5-repo-1] Rework directive for ca15efd: align divide with the previously implemented calculator error contract from worker ao-phase5-repo-10. Add an explicit b == 0 guard that raises ValueError with message Cannot divide by zero; preserve a / b for nonzero divisors. Verify zero divisor"
+
+3. Worker Rework Execution (Worker Turn 497951ef):
+- Worker received orchestrator's directive.
+- Updated calc.py to check b == 0 and raise ValueError("Cannot divide by zero").
+- Added comprehensive unit tests in test_calc.py (6 test functions, 6 passed).
+- Updated README.md API contract.
+- Rework Commit: a94352fca78c9edd8a02c71ea48aa795e4be0329
+- Commit Message: fix(calc): raise ValueError on zero division and add tests
+
+4. Orchestrator Final Verification (Turn 187f6bd5 & f7016dc0):
+- Orchestrator inspected updated worktree and commit a94352f.
+- Verified zero-division guard, test cases, and README contract.
+- Orchestrator Final Conclusion:
+  "Yes—the rework directive is satisfactorily fulfilled in commit a94352f. calc.py now raises ValueError("Cannot divide by zero") on b == 0. Recorded: the follow-up review confirms commit a94352f fully satisfies the rework directive, with all six tests passing. No further rework is needed."

@@ -13,8 +13,8 @@ This roadmap defines the single authoritative execution sequence for the multi-a
 | **Phase 2** | Minimal Authentication Proof | **COMPLETE** | Exactly 1 Codex + 1 Antigravity account logged in |
 | **Phase 3** | Direct Provider Runtime Proof | **COMPLETE** | Gates 1, 2, 3, 4 (Catalog, Astra, Gemini, Tool Roundtrip) |
 | **Phase 4** | Codex Harness Runtime Proof | **COMPLETE** | Gates 5, 6 (Codex -> Astra, Codex -> Gemini Tool Loop) |
-| **Phase 5** | AO Runtime Proof | **NEXT** | Gates 7, 8, 9 (Real Orchestrator, Real Worker, Rework Loop) |
-| **Phase 6** | 3-Worker Concurrency Proof | **BLOCKED** *(P5)* | Gate 10 (Real 3-Worker Concurrency Wave) |
+| **Phase 5** | AO Runtime Proof | **COMPLETE** | Gates 7, 8, 9 (Real Orchestrator, Real Worker, Rework Loop) |
+| **Phase 6** | 3-Worker Concurrency Proof | **NEXT** | Gate 10 (Real 3-Worker Concurrency Wave) |
 | **Phase 7** | First Real Product Workload | **NOT AUTHORIZED** | Apply workforce to `AI-Auto-Video-Creator` tasks (requires explicit user authorization) |
 | **Phase 8** | Capacity Expansion & Hardening | **DEFERRED / OPTIONAL** | Scale toward 6 Plus + 8 Pro; evaluate 5–7 workers when workload demands |
 
@@ -30,9 +30,9 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 4. **Gate 4: Gemini Tool Roundtrip**: Function call translation, execution, and response synthesis fidelity verified. (**VERIFIED - L5**)
 5. **Gate 5: Codex -> Astra**: Successful `codex exec` invocation through CLIProxyAPI targeting `gpt-6-astra`. (**VERIFIED - L5**)
 6. **Gate 6: Codex -> Gemini Tool Loop**: Successful multi-turn coding and file editing loop via `codex exec` targeting `gemini-3.8-flash-high`. (**VERIFIED - L5**)
-7. **Gate 7: Real AO Orchestrator**: Live session launched on Agent Orchestrator with `kind = "orchestrator"`. (**PENDING - P5**)
-8. **Gate 8: Real AO Worker**: Live session launched on Agent Orchestrator with `kind = "worker"` using Gemini. (**PENDING - P5**)
-9. **Gate 9: AO Rework Loop**: Orchestrator reviews worker worktree output and successfully issues a rework directive. (**PENDING - P5**)
+7. **Gate 7: Real AO Orchestrator**: Live session launched on Agent Orchestrator with `kind = "orchestrator"`. (**VERIFIED - L6**)
+8. **Gate 8: Real AO Worker**: Live session launched on Agent Orchestrator with `kind = "worker"` using Gemini. (**VERIFIED - L6**)
+9. **Gate 9: AO Rework Loop**: Orchestrator reviews worker worktree output and successfully issues a rework directive. (**VERIFIED - L6**)
 10. **Gate 10: Real 3-Worker Wave**: Three concurrent live worker sessions complete isolated tasks without worktree, locking, or routing failures (verifying initial runtime verification target of 3 workers; maximum proven live concurrency becomes 3 only after this gate passes). (**PENDING - P6**)
 
 ---
@@ -66,7 +66,7 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 - **Evidence Required**: Execution transcripts with sanitized outputs.
 - **Explicit Non-Goals**: Do not launch AO sessions.
 
-### Phase 5: AO Runtime Proof (NEXT ACTION)
+### Phase 5: AO Runtime Proof (COMPLETE)
 - **Objective**: Verify that Agent Orchestrator successfully provisions and supervises single sessions.
 - **Entry Criteria**: Phase 4 complete.
 - **Required Work**: Execute Gates 7, 8, and 9 on a live AO daemon.
@@ -74,7 +74,7 @@ Candidate A transitions from `PROVISIONAL` to `ACCEPTED` only upon sequential ve
 - **Evidence Required**: AO daemon session logs and git worktree commit logs.
 - **Explicit Non-Goals**: Do not run concurrent workers yet.
 
-### Phase 6: 3-Worker Concurrency Proof
+### Phase 6: 3-Worker Concurrency Proof (NEXT ACTION)
 - **Objective**: Prove concurrent multi-agent execution at the initial runtime verification target (3 workers). Target worker range is 3–7; maximum proven live concurrency remains NOT YET PROVEN until Gate 10 passes.
 - **Entry Criteria**: Phase 5 complete.
 - **Required Work**: Execute Gate 10 (parallel 3-worker wave).

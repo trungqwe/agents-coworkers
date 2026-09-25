@@ -1,0 +1,12 @@
+SHA-256 raw bytes; capability values and raw command output are excluded.
+d213cacb1145d833101890f1155ca617d4179fb8db8d3c73052ad31a1f3a5bd5  evidence/run-20260924-phase7d-wakeup-proof/checkpoint.json
+bd5e0294b972602a2507d7c6cca8a91750f2558c8369ec35ea0f6f877a02c649  evidence/run-20260924-phase7d-wakeup-proof/summary.md
+f4e0f6092b0e7b20baf585a22a660d248d131eda67996abec11d1dc8ff778330  evidence/run-20260924-phase7bc-integration-continuation/summary.md
+9a375532f3383dac52c37f16c479757c84b8ae32ee37734ff7acd12fbad529f5  docs/04-ROADMAP.md
+99d4ee417165cf943beae9b003066be0af121e3b9a8f7abe77a8f797c80c60d1  docs/02-ARCHITECTURE.md
+bc574ae1a85066f134fa54299bbd025b20db74432288acedc29a0ce283c3f896  docs/05-VERIFICATION.md
+b4cacc4924bcfbebd45373e3a61e50f6704c7033d80876b39617a30389ceffb8  docs/06-OPERATIONS.md
+3a7c488f50ecddac9deb406ab4f2dfb4846c150e48b9e811458e68cad7b5b53c  ../agent-orchestrator/backend/internal/service/chat/controller.go
+223ce7ff7762035fd2fa91246fe6967094406cc0b3dd0391beccf82ccae0cdc3  ../agent-orchestrator/backend/internal/session_manager/manager.go
+e12c8091becfb4c5df8f3709e361c44494655d2c39a9c95c271b992cf1bf354c  ../agent-orchestrator/backend/internal/service/browser/authority.go
+bb470ba46e71917621d960a94da1070e1012aa8b11e0a789d0f83008bbc2da61  ../agent-orchestrator/backend/internal/service/browser/service.go

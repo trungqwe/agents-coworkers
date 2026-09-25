@@ -19,7 +19,7 @@ This document governs test definitions, evidence tiers, and test creation rules 
 
 ---
 
-## 2. Invariant & Minimum Evidence Requirements
+## 2. Invariant & Minimum Evidence Requirements (ảnh chụp component baseline)
 
 | Requirement / Invariant | Minimum Level | Current Level Achieved | Verification Method |
 | :--- | :--- | :--- | :--- |
@@ -60,6 +60,33 @@ If those three questions cannot be answered concretely, the test must **not** be
 
 ---
 
-## 4. Evidence Storage Policy
-- **Historical Evidence**: Stored under `/evidence/run-<date>-<name>/` containing per-command raw logs, environment snapshots, and summary records. Evidence runs represent frozen historical captures and are never modified retrospectively.
-- **Current Truth**: Authoritatively documented under `/docs/`. Do not convert every routine test run into a permanent documentation update unless system invariants or roadmap phase statuses have changed.
+## 4. Evidence storage và giới hạn claim
+
+Evidence lịch sử ở `evidence/run-<date>-<name>/` bất biến; correction ghi trong governance hoặc run tiếp nối, không sửa capture cũ. Chỉ lưu metadata/log đã redaction, command/exit code, timestamp, source/artifact hash và provenance. Không thu raw request/auth/environment/cookie hoặc toàn error object. Hash khớp chứng minh integrity, không thay việc chạy test hay review code.
+
+Gates 1–10 và bảng §2 là component baseline, không bị chạy lại chỉ vì đổi docs. INV-001 hiện bảo vệ root, không cấm ngoại lệ worktree đã duyệt; kiểm cleanliness phải gắn thời điểm và baseline, không khẳng định mọi upstream worktree hiện sạch từ evidence cũ.
+
+## 5. Acceptance matrix của workforce
+
+| Capability | Oracle cần đạt | Evidence hiện có | Trạng thái / giới hạn |
+|---|---|---|---|
+| Harness/role/tool-loop | AO → Codex → provider đọc/sửa/tool round-trip | [Gates 1–6](../evidence/run-20260923-phase2-4-gates1-6/summary.md), [7–9](../evidence/run-20260923-phase5-gates7-9/summary.md) | Component VERIFIED; không là autonomous loop |
+| Profile worker mục tiêu | Per-session model/effort readback và tool-loop | [worker-high-profile](../evidence/run-20260923-worker-high-profile/summary.md) | Readback/tool-loop đạt; upstream thinkingLevel NOT OBSERVED, không nâng Gate 10 |
+| Parallel ownership | Worker thực sự overlap, file/resource không ghi chéo | [Gate 10](../evidence/run-20260923-phase6-gate10/summary.md); [pilot 7B–7C](../evidence/run-20260924-phase7bc-integration-continuation/summary.md) | Gate 10: 3 worker low; continuation: A/B Gemini high code độc lập có overlap, C chạy sau ACCEPT trên worktree riêng. Chưa proof 3-worker high code wave |
+| Autonomous delegation | Orchestrator lập task graph, gửi việc/nhận artifact qua AO, không human relay | [Pilot 7A](../evidence/run-20260924-phase7a-native-pilot/summary.md): GPT-6-Astra/low review-only; [7B–7C](../evidence/run-20260924-phase7bc-integration-continuation/summary.md): GPT-5.5/low điều phối A/B/C | OBSERVED cho fixture code/review/integration; không chứng minh rework thực tế, daemon restart recovery hoặc portability |
+| Review/rework | Orchestrator chấp nhận hoặc yêu cầu sửa từ diff/test; worker rework và review lại nếu có lỗi thật | Continuation 7B–7C, verdict native AO message | A/B/C `ACCEPT` quan sát được; không có lỗi cần sửa nên rework thực tế `NOT OBSERVED` |
+| Integration/dependency | Chỉ ghép task khi dependency/review đạt, một integration owner, test chung | Continuation: C được tạo sau A/B ACCEPT, cherry-pick A rồi B, combined unittest 8 tests | OBSERVED trên fixture; không push/merge và không phải integration Product |
+| Routing/affinity | Giữ binding khi eligible; quan sát selected IDs theo session/model | [pool onboarding](../evidence/run-20260923-phase8-pool-onboarding/summary.md) | LIVE_ROUTING 14/14, 5 IDs; không khẳng định cả pool usable hoặc phân phối đều |
+| Failover/cooldown | Credential unavailable được selector xử lý, retry hữu hạn | Cùng run: SOURCE/UNIT/SIMULATED | LIVE_FAILOVER NOT OBSERVED; 429 cũ UNKNOWN; không suy quota remaining từ usage |
+| Pool unavailable | Persist task/next action, tôn trọng cooldown, bounded backoff, tiếp tục khi có capacity | Chưa có end-to-end workflow proof | OPEN; không replay mù request/tool, không retry storm |
+| Session interruption | Resume đúng session/checkpoint, phân biệt explicit wake, user Stop và provider recovery; không lặp side effect | [7D live proof](../evidence/run-20260924-phase7d-wakeup-proof/summary.md): exit/resume native; T1/T2 expected cancellation do interrupt; T3 explicit delivery. [Prototype](../evidence/run-20260925-phase7d-recovery-prototype/summary.md) và [continuation hardening](../evidence/run-20260925-phase7d-recovery-hardening/summary.md) | Same-session resume và explicit wake `LIVE`; terminal states, Observe-state preservation, recover-only, paged receipt lookup, idle/owner preflight, run-owned lease, Stop serialization và task receipt `SIMULATED`; provider failure, daemon restart và unattended recovery live `NOT OBSERVED` |
+| Lost-acceptance cancellation | Persist Stop trước I/O; recover đúng delivery; chỉ interrupt recovered live turn thuộc session; không ordinary resend | [Hardening continuation](../evidence/run-20260925-phase7d-recovery-hardening-continuation/summary.md) | `SIMULATED PASS`: restart/recover-only, interrupt response-loss reconciliation và unconfirmed isolation; `LIVE NOT OBSERVED` |
+| Delivery response-loss recovery | AO/provider nhận task; adapter làm mất response; wrapper restart và recover-only cùng ID; receipt đúng task/artifact; 0 resend | [7D LIVE correction](../evidence/run-20260925-phase7d-stop-live-recovery/durable-correction.md) | AO/provider delivery `LIVE PASS`; transport response-loss `SIMULATED` injection |
+| Cancellation / Stop | Persist Stop, reconcile target state, không ordinary resend; exact-turn safety | [7D LIVE continuation](../evidence/run-20260925-phase7d-stop-live-recovery/summary.md) | Logic Stop `SIMULATED PASS`; Stop LIVE `NOT OBSERVED`; exact-turn Stop trên shared session unsupported và fail-closed |
+| Repo portability | Cùng quy trình trên repo khác, không logic đặc thù video | Chưa có | OPEN; 7E sau pilot có giới hạn |
+
+Phân biệt SOURCE (đọc code), UNIT/SIMULATED (fake executor), LIVE_ROUTING, LIVE_FAILOVER và AO_TOOL_LOOP. Không có 429 tự nhiên thì mô phỏng, không đốt quota để tạo lỗi. Toàn pool unavailable phải kiểm persistence/backoff/resume, không yêu cầu provider luôn sẵn sàng.
+
+Để chấp nhận một workflow: ghi task/dependency/owner, AO message/turn IDs, artifact revision/hash, review verdict và rework, integration/test receipt, interruption/recovery cùng mọi can thiệp coordinator. Worker tự báo PASS hoặc tên test trong stdout không đủ.
+
+CP1 browser UPSTREAM_PATH_RED chỉ chứng minh thiếu control sau prerequisite PASS; không chứng minh command/SSE/modal. CP2A chưa accepted; inventory và E3/Temporal giới hạn ở [kế hoạch workload](phase7-first-workload-plan.md). Không nâng thành gate chặn workforce. Lượt docs-only chỉ kiểm diff/link/nhất quán, không runtime/test lại.

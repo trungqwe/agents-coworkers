@@ -1,0 +1,42 @@
+SIMULATED ORACLES
+COMMAND go test -count=1 -v ./internal/recovery
+EXIT 0
+RESULT 38 top-level tests: 37 PASS, live-env test SKIP; completed-valid, completed-unverified, failed, interrupted and restart subcases PASS.
+COMMAND go test -race -count=1 ./internal/recovery
+EXIT 0
+COMMAND go vet ./...
+EXIT 0
+COMMAND go test -count=1 ./...
+EXIT 0; recovery PASS; integration 3/3 PASS.
+COMMAND git diff --check
+EXIT 0; only existing LF-to-CRLF informational warnings.
+
+LIVE ORACLE
+COMMAND go test -count=1 -v ./internal/recovery -run ^TestLiveAODeliveryRecoveryAfterAcceptedResponseLoss$
+ENVIRONMENT isolated AO base/session/worktree variables; values recorded without credentials.
+EXIT 0
+STDOUT
+=== RUN   TestLiveAODeliveryRecoveryAfterAcceptedResponseLoss
+--- PASS: TestLiveAODeliveryRecoveryAfterAcceptedResponseLoss (29.68s)
+PASS
+ok github.com/trungqwe/agents-coworkers/internal/recovery 30.171s
+
+FIRST LIVE ATTEMPT (NOT PASS)
+EXIT 1; AO turn failed after 3.10s; upstream HTTP 400 reported model unsupported through ChatGPT account. Corrected by isolated gateway-backed CODEX_HOME; no model fallback.
+
+CLEANUP
+session kill exit 0; session cleanup exit 0; AO stop exit 0; gateway stopped; ports 3001/8317 false; run-owned child processes 0; auth runtime copy deleted.
+
+CHECKPOINT-CLOSE LOCAL VERIFICATION (NO PROVIDER)
+COMMAND go test -count=1 ./...
+EXIT 0
+STDOUT ok github.com/trungqwe/agents-coworkers/internal/recovery 1.148s; ok github.com/trungqwe/agents-coworkers/tests/integration 0.208s
+COMMAND go test -race -count=1 ./internal/recovery
+EXIT 0
+STDOUT ok github.com/trungqwe/agents-coworkers/internal/recovery 2.243s
+COMMAND go vet ./...
+EXIT 0; stdout/stderr empty
+COMMAND git diff --check
+EXIT 0; only LF-to-CRLF informational warnings for four documentation files
+CLEANUP_BLOCKED_POLICY
+Two resolved run-owned temp directories remain; owner/process/listener/secret checks are recorded in durable-correction.md. Remove-Item was rejected before execution.

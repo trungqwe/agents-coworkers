@@ -1,0 +1,12 @@
+{
+  "controller": "ready",
+  "latestSequence": 0,
+  "hasMoreBefore": false,
+  "settings": {
+    "model": "fixture-model",
+    "reasoningEffort": "high"
+  },
+  "turns": [],
+  "messages": [],
+  "activities": []
+}

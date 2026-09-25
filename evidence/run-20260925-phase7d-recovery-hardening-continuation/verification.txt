@@ -1,0 +1,63 @@
+COMMAND: go test -count=1 -v ./internal/recovery
+EXIT: 0
+STDERR: empty
+STDOUT (edited; individual top-level tests and relevant subcases):
+PASS TestAOHTTPRejectsNonLoopback
+PASS TestAOHTTPRecoverOnlyUsesStableDeliveryID
+PASS TestAOHTTPSentAndSteeredOutcomesAreDistinct [sent, steered]
+PASS TestAOHTTPObservePaginatesUntilExactTurn
+PASS TestAOHTTPPreflightRequiresIdleOwnedSession
+PASS TestAOHTTPPreflightFailsClosedOnIncompleteAuthoritativeReadback [session_id, project, kind, harness, model, branch, controller, effort]
+PASS TestAOHTTPStopOnlyInterruptsTheRecoveredActiveTurn [owned, ambiguous]
+PASS TestAOHTTPObserveSeparatesTurnCompletionFromTaskReceipt
+PASS TestAOHTTPTransportFailureRemainsUncertainAcrossRestart
+PASS TestAOHTTPAcceptanceResponseLostRestartRecoversSameTaskWithoutResend
+PASS TestAOHTTPDefinitiveValidationFailureAllowsBoundedResend
+PASS TestAOTurnStateMapping
+PASS TestProviderFailureSchedulesBoundedRetry
+PASS TestSendWritesUncertainCheckpointBeforeProviderIO
+PASS TestUncertainRecoveryBacksOffAcrossRestartAndNeverResends
+PASS TestRecoverOnlyInconclusiveStaysUncertain
+PASS TestRestartReadsCheckpointAndWaitsUntilNextRetry
+PASS TestUncertainDeliveryUsesRecoverOnlyWithSameID
+PASS TestCompletedTaskNeverSendsAgain
+PASS TestAllTerminalStatesRemainTerminalAcrossRestart [BLOCKED, CANCELLED, CANCELLED_LOCAL_AO_STOP_UNCONFIRMED, COMPLETED]
+PASS TestDeliveredTaskWithMissingReceiptBlocksInsteadOfReplaying
+PASS TestDeliveredObserveErrorThenNotFoundNeverResendsAcrossRestart
+PASS TestUncertainObserveErrorThenNotFoundUsesRecoverOnlyAcrossRestart
+PASS TestSteeredOutcomeBlocksAsSessionContamination
+PASS TestRunOwnedLeaseAllowsOnlyOneSender
+PASS TestAOTurnCompletionRequiresAcceptedTaskReceipt [missing, wrong_artifact, accepted]
+PASS TestExplicitHumanStopIsTerminalCancellation
+PASS TestAOObservedHumanStopIsTerminalAcrossRestart
+PASS TestCancelPersistsBeforeAOInterruptFailure
+PASS TestLostAcceptanceThenCancelRecoversExactTurnAndNeverResends
+PASS TestLostAcceptanceCancelInterruptResponseLossCanConfirmByObservation
+PASS TestLostAcceptanceCancelUnconfirmedSurvivesRestartWithoutStoppingUnownedTurn
+PASS TestCancelReconciliationAfterRestartStopsRecoveredOwnedTurn
+PASS TestCancelWinsSerializedRaceAndStepCannotSend
+PASS TestGitArtifactReaderBindsHashAndHead
+PACKAGE: ok github.com/trungqwe/agents-coworkers/internal/recovery; 36 top-level tests
+
+COMMAND: go test -race -count=1 ./internal/recovery
+EXIT: 0
+STDOUT: ok github.com/trungqwe/agents-coworkers/internal/recovery
+STDERR: empty
+
+COMMAND: go vet ./...
+EXIT: 0
+STDOUT/STDERR: empty
+
+COMMAND: go test -count=1 ./...
+EXIT: 0
+STDOUT: recovery ok; tests/integration ok (3 tests)
+STDERR: empty
+
+COMMAND: git diff --check
+EXIT: 0
+STDERR: existing LF-to-CRLF informational warnings for four docs; no whitespace error.
+
+COMMAND: ao status --json; AO/Electron process inventory
+EXIT: 0
+STDOUT: shared state=stopped; no isolated AO/Electron daemon process observed.
+CLASSIFICATION: SIMULATED PASS; LIVE NOT OBSERVED; actual AO provider Stop NOT OBSERVED.

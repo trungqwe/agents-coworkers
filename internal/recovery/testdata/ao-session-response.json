@@ -1,0 +1,11 @@
+{
+  "session": {
+    "id": "session-1",
+    "projectId": "fixture",
+    "kind": "worker",
+    "harness": "codex",
+    "model": "fixture-model",
+    "branch": "ao/session-1/root",
+    "isTerminated": false
+  }
+}

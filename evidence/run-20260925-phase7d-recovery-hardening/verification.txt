@@ -1,0 +1,24 @@
+BASELINE 0190e925cd552b936250c74c29cbc272bb477e49
+
+COMMAND go test -count=1 -v ./internal/recovery
+EXIT 0
+RESULT 31 top-level tests PASS; sent/steered, paged Observe, ownership/idle preflight, delivered/uncertain restart, lease race, Stop and receipt subcases PASS.
+
+COMMAND go test -race -count=1 ./internal/recovery
+EXIT 0
+RESULT ok github.com/trungqwe/agents-coworkers/internal/recovery
+
+COMMAND go vet ./...
+EXIT 0
+
+COMMAND git diff --check
+EXIT 0
+RESULT only existing Git LF-to-CRLF informational warnings for docs; no whitespace error.
+
+COMMAND ao status --json
+EXIT 0
+RESULT state=stopped; shared daemon was not started or restarted.
+
+CLASSIFICATION
+SIMULATED: transport response loss after AO acceptance, restart, stable clientMessageId, recover-only, receipt oracle, 0 ordinary resend.
+LIVE: NOT OBSERVED in this continuation.

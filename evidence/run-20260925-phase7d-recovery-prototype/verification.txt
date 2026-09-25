@@ -1,0 +1,33 @@
+Phase 7D recovery verification (redacted/edited)
+Timestamp date: 2026-09-25 Asia/Saigon
+Worktree: agents-coworkers-phase7d-recovery
+Baseline: 0190e925cd552b936250c74c29cbc272bb477e49
+
+COMMAND: go test ./... -count=1 -v
+EXIT: 0
+RESULT: internal/recovery 20 top-level PASS plus 6 subcases; tests/integration 3 PASS.
+RECOVERY ORACLES:
+- loopback-only AO HTTP adapter; stable recover-only clientMessageId
+- AO completed turn separated from accepted task receipt
+- transport failure remains DELIVERY_UNCERTAIN across restart
+- definitive request rejection is the only retry-send path
+- write-ahead uncertain checkpoint precedes provider I/O
+- recover-only error/inconclusive result backs off and never ordinary-sends
+- BLOCKED/CANCELLED/COMPLETED terminal across repeated Step/restart
+- lost receipt blocks terminally; accepted receipt requires exact task/artifact oracle
+- Stop-first synchronized race ends CANCELLED with zero Send/RecoverOnly
+
+COMMAND: go test -race ./internal/recovery -count=1
+EXIT: 0
+RESULT: PASS; no race reported.
+
+COMMAND: go vet ./...
+EXIT: 0
+RESULT: PASS.
+
+COMMAND: git diff --check
+EXIT: 0
+RESULT: PASS; only Git line-ending notices were emitted.
+
+LIVE: not run. No disposable AO fixture session was created or mutated.
+SIMULATED: AO state mapping and transport loss used httptest/custom RoundTripper; no token, capability, credential, environment dump or raw provider payload retained.

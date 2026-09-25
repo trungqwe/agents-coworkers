@@ -1,0 +1,12 @@
+{
+  "run_id": "run-20260924-phase7d-wakeup-proof",
+  "task_id": "P7D-FIXTURE-READONLY-01",
+  "session_id": "ao-phase5-repo-21",
+  "delivery_id": "72343ba3-9b28-4a58-a98b-230bb762aea3",
+  "queued_followup_task_id": "P7D-FIXTURE-RESUME-01",
+  "queued_followup_delivery_id": "731b1692-ffe9-462f-a106-f7e7327a0834",
+  "fixture_head": "1ab3169fb41e74e50e64fb47bf4ffc974d01a47f",
+  "artifact_path": "tests/test_phase7_integration.py",
+  "artifact_sha256": "7a615219b6d721655a337153c0f717e13fc6bca153cc989de3d6571c9fe25224",
+  "next_action": "interrupt the read-only in-flight task; observe whether the already-queued follow-up wakes in the same AO session without another send; if it remains queued, cancel only that test delivery and record the source gap"
+}

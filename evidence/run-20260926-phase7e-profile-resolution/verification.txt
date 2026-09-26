@@ -1,0 +1,35 @@
+BASELINE
+7d6e0c79f6fad48ea66d4a1baaa0919b14db2997
+
+CATALOG
+gateway/source: all three approved candidates present
+AO model catalog: gemini-3.7-flash-high present and selected
+
+DIRECT FIXTURE
+gemini-3.7-flash-high/high: HTTP 200, 2673 ms, Retry-After NOT OBSERVED
+gateway trace 7de93e01; one 403 failover then success
+gemini-3.6-flash-high: NOT TRIED
+gemini-3.1-pro-low: NOT TRIED
+
+AO PREFLIGHT
+session p7e-resolution-1 readback exact
+delivery p7e-orch-preflight-001
+turn 3241f5ab-2795-4755-80b1-cdde0fd05d52: FAILED final 429
+tool-loop/receipt: NOT OBSERVED
+manual retry: 0
+
+WORKER/WORKLOAD
+worker profile: NOT TESTED
+task graph/implementation/integration/CLI/self-host proof: NOT STARTED
+
+CLEANUP
+session kill/cleanup, project remove, AO stop: exit 0
+gateway stopped; ports 3004/8320 false
+temporary authentication copy deleted; shared credential store unchanged
+temp root recursive LiteralPath deletion rejected before execution: CLEANUP_BLOCKED_POLICY
+
+LOCAL CHECKS (NO PROVIDER)
+go test -count=1 ./...: exit 0; recovery 1.118s; integration 0.201s
+go test -race -count=1 ./internal/recovery: exit 0; 2.191s
+go vet ./...: exit 0
+git diff --check: exit 0; informational LF-to-CRLF warning on roadmap only

@@ -1,0 +1,7 @@
+# Historical locator digest record from Phase 7B-7C integration pilot (2026-09-24).
+# This is an archived record of disposable test worktrees, not an active filesystem manifest.
+# Temporary worktree paths have been redacted to use [REDACTED_USER].
+4033149a25e13d5753177a61759c82c87076aa1460fedd09ef84db5b25525fc0  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_arithmetic.py
+5a40c9bcaf3681f90acc785561f00740076a48d2e959764a0c32acc36966326a  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_division.py
+3ab22ce71d0243ad10b5288bbbab37a15f0e74dba86864346291b35ea707a053  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_calculator.py
+7a615219b6d721655a337153c0f717e13fc6bca153cc989de3d6571c9fe25224  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/tests/test_phase7_integration.py

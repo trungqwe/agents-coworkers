@@ -271,8 +271,8 @@ Xác thực Gateway: Thăm dò catalog gateway sử dụng `GET /v1/models`. Khi
    - **Kiểm tra kết nối và danh mục (Catalog Probe)**: Kiểm tra kết nối và identity của AO daemon (`GET /api/v1/identity`) và catalog gateway (`GET /v1/models`). Lệnh `doctor` chỉ chứng minh: gateway reachable, `CLIPROXY_KEY` được chấp nhận, `/v1/models` trả catalog hợp lệ và model yêu cầu xuất hiện trong catalog. **Tuyệt đối không đồng nhất sự hiện diện của model trong catalog với credential eligibility hay usable capacity** (`providerCallPerformed: false`, `credentialEligibility: "NOT_OBSERVED"`).
    - **Kiểm tra công cụ thực thi (`requiredTools`)**: `git` luôn là công cụ bắt buộc cho Slice 8A. Các công cụ khác (Python, Node, Go...) chỉ được kiểm tra khi `RunSpec` khai báo tường minh trong `requiredTools`. `doctor` dùng `exec.LookPath` hoặc kiểm tra file thực thi trực tiếp, tuyệt đối không dựng shell command từ giá trị `RunSpec`; tên công cụ phải qua xác thực chặt chẽ (không chứa đường dẫn hay shell metacharacter). Go được dùng để build/test chính `agents-coworkers` nhưng không phải prerequisite mặc định của target project; Node không được hardcode làm prerequisite.
    - **Chính sách không gian làm việc (`workspacePolicy`)**:
-     * `productRootMustBeClean: true`: Checkout gốc Product (`AI Auto Video Creator`) bắt buộc phải ở trạng thái sạch hoàn toàn (`git status` clean).
-     * `executionWorkspaceDirtyPolicy`: Nhận giá trị `require_clean` (mặc định) hoặc `allow_dirty_recorded`. Nếu `allow_dirty_recorded`, worktree thực thi được phép dirty và SHA-256 của output `git status --porcelain=v1 -z` sẽ được ghi nhận; không tự suy đoán mọi dirty state là "expected".
+     * `productRootMustBeClean: true`: Checkout gốc Product (`AI Auto Video Creator`) bắt buộc phải ở trạng thái sạch hoàn toàn qua raw `git status --porcelain=v1 -z`, không có bất kỳ ngoại lệ nào (kể cả tệp dưới `.agents-coworkers/**`).
+     * `executionWorkspaceDirtyPolicy`: Nhận giá trị `require_clean` (mặc định) hoặc `allow_dirty_recorded`. Execution workspace đánh giá source-dirty từ raw porcelain (`git status --porcelain=v1 -uall -z`) sau khi loại duy nhất exact untracked porcelain record đã tính từ `RunSpec.runId` (`?? .agents-coworkers/recovery-leases/<sha256(runId + "\n__run__")>.lease`). Mọi trạng thái tracked, staged, modified, deleted, rename hoặc copy tại cùng path vẫn được xem là source-dirty; tuyệt đối không gọi mọi nội dung `.agents-coworkers/**` là expected; ngoại lệ lease chỉ tồn tại để giữ tính lũy đẳng khi cùng run chuyển FREE→OWNED. Nếu `allow_dirty_recorded`, worktree thực thi được phép dirty và `porcelainSha256` là SHA-256 của canonical filtered source-porcelain này; không tự suy đoán mọi dirty state là "expected".
    - **Không đụng chạm Lease**: `doctor` không kiểm tra hoặc acquire lease.
    - **Xuất kết quả**: Xuất `DoctorReport` qua `stdout`/JSON; **tuyệt đối không tạo hoặc sửa đổi `RunManifest`** và **không nhận cờ `--manifest`**.
 
@@ -282,9 +282,9 @@ Xác thực Gateway: Thăm dò catalog gateway sử dụng `GET /v1/models`. Khi
    ```
    - Gắn kết control-plane vào session/project hiện có trên AO daemon. Cờ `--manifest` là đường dẫn xuất tệp (output path).
    - **Kiểm tra Workspace Dirty Policy**:
-     * Product root checkout bị dirty -> luôn lập tức dừng và thoát với exit code `2`.
-     * Nếu `executionWorkspaceDirtyPolicy == "require_clean"` mà execution workspace bị dirty -> exit code `2`.
-     * Nếu `executionWorkspaceDirtyPolicy == "allow_dirty_recorded"` mà execution workspace bị dirty -> cho phép tiếp tục (PASS) và tính toán băm `porcelainSha256` từ raw output `git status --porcelain=v1 -z` để ghi vào `worktreeBinding`.
+     * Product root checkout bị dirty (đánh giá nguyên trạng output `git status --porcelain=v1 -z`, không ngoại lệ) -> luôn lập tức dừng và thoát với exit code `2`.
+     * Nếu `executionWorkspaceDirtyPolicy == "require_clean"` mà execution workspace bị dirty (sau khi loại duy nhất exact untracked lease record của run) -> exit code `2`.
+     * Nếu `executionWorkspaceDirtyPolicy == "allow_dirty_recorded"` mà execution workspace bị dirty -> cho phép tiếp tục (PASS) và tính toán băm `porcelainSha256` từ canonical filtered source-porcelain (sau khi loại duy nhất exact untracked lease record của run) để ghi vào `worktreeBinding`.
    - **Kiểm tra Run Lease (Chỉ gọi API inspect read-only)**:
      * Lease root: `<executionWorkspace>/.agents-coworkers/recovery-leases`. Tên tệp lease suy từ SHA-256 của `runOwner + "\n" + taskId` với `runOwner = RunSpec.runId`, `taskId = "__run__"`.
      * `attach` **tuyệt đối không gọi `Acquire` hoặc `Release`** vì không có tiến trình run dài hạn giữ lease trong Slice 8A.
@@ -489,7 +489,7 @@ Ma trận hành vi bắt buộc kiểm chứng cho Slice 8A:
    - Kiểm tra mã thoát: exit code 2 (validation/catalog/auth lỗi) và exit code 3 (unreachable/timeout) đúng contract;
    - Xác nhận Product root checkout sạch (`git status` clean); chấp nhận dirty trên run worktree chỉ khi `executionWorkspaceDirtyPolicy == "allow_dirty_recorded"`.
 2. **Attach**:
-   - Kiểm tra `workspacePolicy`: `require_clean` + dirty worktree -> exit code 2; `allow_dirty_recorded` + dirty worktree -> PASS và ghi nhận `porcelainSha256`; Product root dirty luôn exit code 2;
+   - Kiểm tra `workspacePolicy`: Product root dirty (đánh giá nguyên trạng output `git status --porcelain=v1 -z`, không ngoại lệ) luôn exit code 2; `require_clean` + dirty worktree (sau khi loại duy nhất exact untracked lease record của run từ `git status --porcelain=v1 -uall -z`) -> exit code 2; `allow_dirty_recorded` + dirty worktree -> PASS và ghi nhận `porcelainSha256` (SHA-256 của canonical filtered source-porcelain);
    - Kiểm tra run lease từ API inspect read-only (`workspaceRoot`, `runOwner`, `taskId: "__run__"`); tuyệt đối không gọi `Acquire` hoặc `Release`;
    - `FREE`: cho phép tiếp tục; `OWNED` cùng run: idempotent readback; `LOCKED`: fail-closed, exit code 2;
    - Thiếu hoặc hỏng `RunSpec`: exit code 2;

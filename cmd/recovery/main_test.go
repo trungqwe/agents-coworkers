@@ -248,8 +248,7 @@ func TestExitCodeTimeoutNonTerminal(t *testing.T) {
 	}
 	path := writeTempCheckpoint(t, cp)
 
-	// Set timeout 150ms and poll 30ms so that recovery times out while non-terminal
-	stdout, stderr, code := runCLI(t, "run", "-checkpoint", path, "-workspace", repoRoot, "-ao-url", server.URL, "-timeout", "150ms", "-poll", "30ms")
+	stdout, stderr, code := runCLI(t, "run", "-checkpoint", path, "-workspace", repoRoot, "-ao-url", server.URL, "-timeout", "1500ms", "-poll", "50ms")
 	if code != ExitCodeTimeout {
 		t.Fatalf("expected exit code %d for timeout, got %d. stderr: %s, stdout: %s", ExitCodeTimeout, code, stderr, stdout)
 	}

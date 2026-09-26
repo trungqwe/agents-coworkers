@@ -162,6 +162,13 @@ func runRecovery(args []string) (int, error) {
 		}
 
 		stepCP, stepErr := dispatcher.Step(ctx)
+		if ctx.Err() != nil {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				return ExitCodeTimeout, fmt.Errorf("recovery timed out before terminal state: %w", ctx.Err())
+			}
+			return ExitCodeTimeout, fmt.Errorf("recovery interrupted: %w", ctx.Err())
+		}
+
 		if stepErr != nil {
 			if errors.Is(stepErr, recovery.ErrLeaseHeld) || stepCP.TaskID == "" {
 				return ExitCodeUsageError, fmt.Errorf("recovery step failed: %w", stepErr)

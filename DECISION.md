@@ -7,14 +7,15 @@
 - **Selected Candidate**: **Candidate A** (Unified Codex Client Harness via CLIProxyAPI Gateway)
 - **Architectural Status**: `SOURCE-FEASIBLE`
 - **Runtime Decision**: `ACCEPTED` (All 10 Canonical Verification Gates verified at runtime; initial target of 3 live concurrent workers proven)
-- **Active Roadmap Phase**: **Phase 6 — 3-Worker Concurrency Proof (COMPLETE)**; **Phase 7 remains NOT AUTHORIZED**; **Phase 8 remains DEFERRED / OPTIONAL** (authoritative phase status and exit criteria are maintained in [docs/04-ROADMAP.md](docs/04-ROADMAP.md))
+- **Active Roadmap Phase**: **Phase 7 — đang thực thi theo checkpoint**; Phase 8 vẫn `PARTIAL_EVIDENCE / OPTIONAL` (trạng thái authoritative tại [docs/04-ROADMAP.md](docs/04-ROADMAP.md)).
 
 ---
 
 ## Architecture Summary
 
-- **Orchestrator**: `gpt-6-astra` (effort: `low`, harness: `codex`, kind: `orchestrator`, mode: `chat`)
-- **Workers**: `gemini-3.8-flash-high` (effort: `low`, harness: `codex`, kind: `worker`, mode: `chat`)
+- **Orchestrator**: role `orchestrator`; model/effort do user chọn theo từng run sau catalog, credential eligibility và session readback.
+- **Workers**: role `worker`; model/effort do user chọn theo từng run với cùng preflight.
+- **Historical profiles**: GPT-6 Astra/low, GPT-5.5/low và Gemini high là bằng chứng của các run cụ thể, không phải khóa role cố định. Lỗi một profile không suy thành toàn bộ provider/pool mất capacity; profile thay thế phải được ghi tường minh, không fallback âm thầm.
 - **Target Worker Range**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: 3 (empirically proven in Gate 10 with 3 concurrent workers, 38.848216s overlap)
 - **Gateway**: CLIProxyAPI on `127.0.0.1:8317` managing ChatGPT Plus (6 accounts target) and Gemini Pro (8 accounts target) pools.
 

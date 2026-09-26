@@ -1,0 +1,4 @@
+REDACTED METADATA ONLY; no request headers or runtime key.
+Initial smoke: Invalid API key because CLIPROXY_KEY was absent in shell.
+Catalog retry using existing runtime key in memory: 25 models; candidate ID present; base ID absent.
+AO Codex catalog: 19 models; candidate efforts low, medium, high.

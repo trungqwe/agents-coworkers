@@ -26,13 +26,13 @@ Integration templates, patches, tests, and audit evidence for operating a multi-
 ```text
 Agent Orchestrator
 |
-+-- Orchestrator:  gpt-6-astra (effort: low, harness: codex, kind: orchestrator)
-+-- Workers:       gemini-3.8-flash-high (effort: low, harness: codex, kind: worker)
++-- Orchestrator:  model/effort do user chọn theo từng run (harness: codex, kind: orchestrator)
++-- Workers:       model/effort do user chọn theo từng run (harness: codex, kind: worker)
 |                  Target worker range: 3–7 | Initial runtime verification target: 3 | Maximum proven live concurrency: 3
 |
 +--> CLIProxyAPI Gateway (127.0.0.1:8317)
-       +-- 6x ChatGPT Plus accounts -> gpt-6-astra
-       +-- 8x Gemini Pro accounts   -> gemini-3.8-flash-high
+       +-- Credential pool được lọc theo catalog, eligibility và profile của run
+       +-- Không fallback âm thầm giữa model/provider
 ```
 
 ---
@@ -86,7 +86,7 @@ See [docs/06-OPERATIONS.md](docs/06-OPERATIONS.md) for complete dynamic daemon d
 
 ## 5. Runtime Acceptance
 
-Candidate A is **ACCEPTED** following sequential runtime verification of all 10 canonical gates (Gates 1–10). Maximum proven live concurrency is **3** (Phase 6 COMPLETE). Phase 7 (Product Workload) remains **NOT AUTHORIZED** pending explicit user authorization; Phase 8 (Capacity Expansion) remains **DEFERRED / OPTIONAL**.
+Candidate A is **ACCEPTED** following sequential runtime verification of all 10 canonical gates (Gates 1–10). Maximum proven live concurrency is **3** (Phase 6 COMPLETE). Phase 7 đang thực thi theo các checkpoint được user cấp quyền; AI Video Creator chỉ là workload mẫu, không phải gate hoàn thành workforce. Mỗi run chỉ dùng profile sau khi catalog, credential eligibility và AO session readback đều khớp.
 
 See:
 - [Canonical Roadmap & Runtime Gates](docs/04-ROADMAP.md)

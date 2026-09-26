@@ -1,0 +1,128 @@
+{
+  "schema": "phase7a.snapshot.v1",
+  "run": "run-20260924-phase7a-native-pilot",
+  "source": {
+    "project": "ai-auto-video-creator",
+    "aoSession": "ai-auto-video-creator-2",
+    "baseline": "4a7c8c921b7e05066505d51b168a02c3fde61317",
+    "mode": "read-only copy"
+  },
+  "selection": "P8 CP2A backend review only; includes tracked diff and full untracked source files; excludes credentials, runtime config, dependencies and raw logs",
+  "entries": [
+    {
+      "path": "_diff/tracked-cp2a.patch",
+      "bytes": 18414,
+      "sha256": "5ae2670b821b2701fd5762b0253c8dec9e31851e3f750b90848dc27663c347c7"
+    },
+    {
+      "path": "_governance-phase7-plan.md",
+      "bytes": 42450,
+      "sha256": "43cf4c51c5b391b24d61aa465be91f6269070863a4b7acee354ff471d7e91e0e"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 2298,
+      "sha256": "753ee3593a73b985b9d5666cc58dad97b6db963ee91a50b4177623336597dc40"
+    },
+    {
+      "path": "docs/02-data-model.md",
+      "bytes": 52320,
+      "sha256": "71c658671571f8deee721199c1c949b7e223c169be9cb5f3114a735d0256d046"
+    },
+    {
+      "path": "docs/09-contracts/01-control-api-and-stream.md",
+      "bytes": 10609,
+      "sha256": "be33c8d06b999850615b81ee186fae92670adb93b01c8b98ab73a981f3cbb087"
+    },
+    {
+      "path": "docs/09-contracts/09-orchestration-contracts.md",
+      "bytes": 14016,
+      "sha256": "7753b47cbc8380f60cc4e607700612dca0b49c38b359c609af94c354b9fb96eb"
+    },
+    {
+      "path": "docs/milestones/m2-control-plane/evidence/m2-p8/run-m2-p8-cp1-continuation-m2-p8-run-b81a7faa2c86/audit-summary.json",
+      "bytes": 2876,
+      "sha256": "d26ea6922888d993b98c1b417a8874703a6b7f6ae37ada7af1abbdc84b3370aa"
+    },
+    {
+      "path": "docs/milestones/m2-control-plane/evidence/m2-p8/run-m2-p8-cp2a-backend-20260924/audit-status.json",
+      "bytes": 4195,
+      "sha256": "d5f5d2b22c59d122882cbef5c686f1e06ac23dc6e203ab3467c03b25db688af7"
+    },
+    {
+      "path": "docs/milestones/m2-control-plane/evidence/m2-p8/run-m2-p8-cp2a-backend-20260924/hashes.sha256",
+      "bytes": 1962,
+      "sha256": "86f333e8727037db0204e5e14cf1f960d7e9ac0b076dcc728f34861f4a628b13"
+    },
+    {
+      "path": "src/controlplane/api/routes/control.py",
+      "bytes": 5208,
+      "sha256": "dc8a5669666f8ffe15b7cd6707d3b30b020337fc5f056587fef129ed02cb7d0d"
+    },
+    {
+      "path": "src/controlplane/application/admin_execution.py",
+      "bytes": 7869,
+      "sha256": "3798e2a6531a4ef055b7bfa752fddfa03399e03e8b15cf9a4b9e1f52e080e263"
+    },
+    {
+      "path": "src/controlplane/application/control_api/commands.py",
+      "bytes": 9521,
+      "sha256": "22f2be50af31eb08aa953fbe18a81d7d8d14c41fdad18c4e3ed1665392ac031a"
+    },
+    {
+      "path": "src/controlplane/application/control_api/query_ports.py",
+      "bytes": 2594,
+      "sha256": "8e26dcd028207513eeb51888243359457908aa0f1d7f8c6a26b9a34b928acf8a"
+    },
+    {
+      "path": "src/controlplane/application/test_driver.py",
+      "bytes": 2223,
+      "sha256": "1ce179faa1b875555ff3b8fb56b51f0d6f794e74e0b48ddc530486fc03055780"
+    },
+    {
+      "path": "src/controlplane/domain/statemachine/__init__.py",
+      "bytes": 10633,
+      "sha256": "dcdd9b19c871644d1f68b6093ba45fb39e72d35f3d1410795a33513fbd74bc05"
+    },
+    {
+      "path": "src/controlplane/infrastructure/db/admin_execution.py",
+      "bytes": 8449,
+      "sha256": "40b000e9aa751308e3a1a1727334b34003d000482763938c452bd22d3457eafa"
+    },
+    {
+      "path": "src/controlplane/infrastructure/db/control_api_commands.py",
+      "bytes": 3367,
+      "sha256": "957e0b93558fe4907fe7dc91d32986be48e78f1b0aaa542c2b7496e1aa1cabd3"
+    },
+    {
+      "path": "src/controlplane/infrastructure/db/control_api_queries.py",
+      "bytes": 5563,
+      "sha256": "2b12312c9af9df5779b96cfd45cd91c10eb3cb2e34cda314a62edfc30d361e6b"
+    },
+    {
+      "path": "src/controlplane/infrastructure/db/migrations/0009_p8_execution_state.rollback.sql",
+      "bytes": 433,
+      "sha256": "800e52bffdd61362dd296c163f90b24b44a8255e354096b319491d971a8801d1"
+    },
+    {
+      "path": "src/controlplane/infrastructure/db/migrations/0009_p8_execution_state.sql",
+      "bytes": 1604,
+      "sha256": "4c0715cd44c0290410d3e1d5afd2013ff28a4648e5baeebb8b3d44ec10965a13"
+    },
+    {
+      "path": "src/controlplane/infrastructure/db/outbox/postgres.py",
+      "bytes": 3006,
+      "sha256": "5e784bcad5c8d8a8045ee8da7f0987b3309cab9a72a408c04aca0f63c258c893"
+    },
+    {
+      "path": "src/controlplane/infrastructure/db/projections/postgres.py",
+      "bytes": 5970,
+      "sha256": "0593cbf8abd507842283bf6c9c3905537f564a8cd9acd7b03a6b8fd0cde5b856"
+    },
+    {
+      "path": "tests/m2/test_p8_execution_state.py",
+      "bytes": 21252,
+      "sha256": "8e7b54cc03b1111ad395348ccdb8be2faf7b8495dc7bfddf1241abce147420dc"
+    }
+  ]
+}

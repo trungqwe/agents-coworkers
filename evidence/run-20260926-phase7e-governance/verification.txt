@@ -1,0 +1,13 @@
+GOVERNANCE PREFLIGHT
+Historical GPT-5.5 evidence preserved; blocker corrected by additive record only.
+Untracked linked evidence internal verification:
+- run-20260923-phase8-pool-onboarding: 5 internal entries, 0 mismatch.
+- run-20260923-worker-high-profile: 10 internal entries, 0 mismatch.
+- run-20260924-phase7a-native-pilot: root summary/snapshot manifest valid; nested snapshot manifest 17/17 after restoring four exact hash-matching snapshot files from the read-only Product worktree.
+External mutable source hashes in historical manifests were not rewritten.
+
+LOCAL CHECKS
+go test -count=1 ./...: exit 0; recovery 1.182s; integration 0.208s.
+go test -race -count=1 ./internal/recovery: exit 0; 2.305s.
+go vet ./...: exit 0.
+git diff --check: exit 0; informational LF-to-CRLF warnings only.

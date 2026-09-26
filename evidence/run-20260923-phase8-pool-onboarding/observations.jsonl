@@ -1,0 +1,24 @@
+{"step":"preflight","codex_registered":1,"gemini_registered":1,"target_model_catalog_http":200,"target_model_present":true}
+{"step":"gemini_login_2","codex_registered":1,"gemini_registered":2,"identity_distinct":true}
+{"step":"gemini_login_3","codex_registered":1,"gemini_registered":3,"identity_distinct":true}
+{"step":"gemini_login_4","codex_registered":1,"gemini_registered":4,"identity_distinct":true}
+{"step":"gemini_login_5","codex_registered":1,"gemini_registered":5,"identity_distinct":true,"login_reopened_once_after_no_increment" : true}
+{"step":"gemini_login_6","codex_registered":1,"gemini_registered":6,"identity_distinct":true}
+{"step":"gemini_relogin_duplicate","codex_registered":1,"gemini_registered":6,"existing_credential_updated":true}
+{"step":"gemini_login_7","codex_registered":1,"gemini_registered":7,"identity_distinct":true,"completed_during_stop_request":true}
+{"step":"fixture_request","session":"A","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G1","latency_ms":3961,"input_tokens":22,"output_tokens":57}
+{"step":"fixture_request","session":"A","ordinal":2,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G1","latency_ms":5545,"input_tokens":22,"output_tokens":62}
+{"step":"fixture_request","session":"B","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G1","latency_ms":4588,"input_tokens":22,"output_tokens":73}
+{"step":"fixture_request","session":"C","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G1","latency_ms":14235,"input_tokens":22,"output_tokens":53}
+{"step":"fixture_request","session":"D","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G1","latency_ms":4574,"input_tokens":22,"output_tokens":51}
+{"step":"fixture_request","session":"E","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G2","latency_ms":5270,"input_tokens":22,"output_tokens":67}
+{"step":"fixture_request","session":"F","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G1","latency_ms":4692,"input_tokens":22,"output_tokens":67}
+{"step":"fixture_request","session":"G","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G3","latency_ms":4705,"input_tokens":22,"output_tokens":67}
+{"step":"fixture_request","session":"H","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G2","latency_ms":6236,"input_tokens":22,"output_tokens":50}
+{"step":"fixture_request","session":"I","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G1","latency_ms":4243,"input_tokens":22,"output_tokens":58}
+{"step":"fixture_request","session":"J","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G4","latency_ms":3546,"input_tokens":22,"output_tokens":65}
+{"step":"fixture_request","session":"K","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G5","latency_ms":4112,"input_tokens":22,"output_tokens":52}
+{"step":"fixture_request","session":"L","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G3","latency_ms":4011,"input_tokens":22,"output_tokens":65}
+{"step":"fixture_request","session":"M","ordinal":1,"model":"gemini-3.8-flash-high","effort":"high","status":200,"selected":"G2","latency_ms":5339,"input_tokens":22,"output_tokens":53}
+{"step":"source_unit","suite":"scheduler/affinity/retry/cooldown/Antigravity-429/trace","result":"PASS","classification":"SIMULATED","live_failover":"NOT_OBSERVED"}
+{"step":"ao_resume","session":"ai-auto-video-creator-2","initial_result":"INTERNAL_ERROR missing Codex rollout in daemon default home","recovered_with_existing_fixture_codex_home":true,"final_status":"working","new_session_or_worktree":false}

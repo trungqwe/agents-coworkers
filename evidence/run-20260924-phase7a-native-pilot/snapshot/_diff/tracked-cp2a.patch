@@ -1,0 +1,261 @@
+diff --git a/docs/02-data-model.md b/docs/02-data-model.md
+index 3320315..09d78b4 100644
+--- a/docs/02-data-model.md
++++ b/docs/02-data-model.md
+@@ -795,3 +795,11 @@ Các đối tượng nghiệp vụ có thể thuộc workspace phải mang `work
+ SourceCandidate READY được kiểm tra lại tại registration và kết thúc MATCHED_EXISTING/BLOCKED_TOMBSTONE/REJECTED nếu dữ liệu/policy đã đổi (CT-SRC-003A). Candidate, Source, receipt và outbox phải nhất quán trong transaction.
+ 
+ CollectedDocument chỉ tồn tại khi package đủ schema/định danh/provenance. Nội dung không đủ là eligibility/disposition của package hợp lệ; payload sai cấu trúc là lỗi biên, không tạo Article hoặc document giả (CT-SRC-006).
++
++## P8-START-001 — execution state cho StartProductionBatch (CP2A)
++
++`cp_operation_executions` là source state authoritative của operation: khóa `(workspace_id, operation_id)`, FK cùng workspace đến receipt và batch, `status` thuộc `PREPARED → STARTED → SUCCEEDED`, `revision` tương ứng `0 → 1 → 2`. `cp_production_batches` tiếp tục là source batch; batch mới `CREATED/revision=1`, activation thành `RUNNING/revision=2`. `SUCCEEDED` chỉ xác nhận start command đã kích hoạt batch; không xác nhận batch/video hoàn tất và không ghi completion ledger.
++
++Initial operation, batch revision, receipt, idempotency record và đúng một accepted outbox event thuộc cùng HTTP command UoW. Trước claim, accepted event phải có `APPLIED` checkpoint theo đúng receipt/operation/batch; fixture driver giao event qua application port và accepted P3 processor, không viết checkpoint trực tiếp. Claim/confirm kiểm actor, run ID, expected revision, receipt/batch/evidence binding trong application service, CAS trên source và publish qua P3/P7B accepted outbox/processor/writer/fence trên cùng UoW. Snapshot lấy trực tiếp source state/revision; event_kind/job state không thay thế nguồn. Fixture test driver chỉ gọi application ports; không public mint/transition endpoint.
++
++Migration 0009 không backfill receipt cũ thành trạng thái giả: thiếu execution row trả `unknown_legacy` và `revision=null`; batch cũ giữ `revision=null`, transition bị từ chối cho đến reconciliation có audit. Rollback fail-closed khi còn execution row hoặc batch revision khác null; cưỡng ép drop sẽ mất transitions và batch revision/timestamp, không thể tái tạo từ receipt/outbox. Chỉ cho rollback trên disposable DB rỗng hoặc theo export/restore có authority riêng.
+diff --git a/docs/09-contracts/01-control-api-and-stream.md b/docs/09-contracts/01-control-api-and-stream.md
+index 690c3b6..bc81a0d 100644
+--- a/docs/09-contracts/01-control-api-and-stream.md
++++ b/docs/09-contracts/01-control-api-and-stream.md
+@@ -94,6 +94,15 @@ Không có command sửa byte của bản gốc tại chỗ. Bản xử lý là
+ 
+ `RegenerateFromStage` không cho phép sửa lịch sử. Các output cũ vẫn được giữ để audit theo retention policy.
+ 
++> **Hiệu chỉnh theo Amendment P8-START-001 (User approved cho Phase 7 / M2-P8):**
++> `operation_id` của receipt trả về từ `StartProductionBatch` chỉ theo dõi chu trình thực thi của chính command `StartProductionBatch`:
++> - `PREPARED` (hiển thị `accepted`): Lệnh đã được ghi nhận trong Unit of Work, batch ở trạng thái `CREATED` (revision 1), operation execution state khởi tạo ở revision 0, receipt trả 202 kèm operation ref.
++> - `STARTED` (hiển thị `running`): Executor tin cậy đã nhận và bắt đầu xử lý command, chuyển trạng thái sang `STARTED` (revision 1) cùng bằng chứng khởi động (start evidence kind/ref).
++> - `SUCCEEDED` (hiển thị `succeeded`): Trong cùng Unit of Work, command đã chuyển bền vững batch từ `CREATED` sang `RUNNING` (revision 2) và operation chuyển sang `SUCCEEDED` (revision 2) với bằng chứng kích hoạt (activation evidence kind/ref) được ràng buộc.
++> - Trạng thái `SUCCEEDED` của operation này **KHÔNG** có nghĩa là batch hoàn thành (`COMPLETED_TARGET`), job hoàn thành hay toàn bộ quy trình video production kết thúc; và **KHÔNG** cấp quyền tạo `CompletionLedger`. Batch completion và ledger tiếp tục tuân thủ tuyệt đối CT-ORC-008/010.
++> - Historical receipts cũ (trước P8): do không có bản ghi trong bảng execution state và không được backfill suy diễn, trả `status="unknown_legacy"`, `revision=null`.
++
++
+ ### CT-API-006 — Cấu hình và tài khoản ngoài
+ 
+ | Command | Kết quả | Quy tắc |
+@@ -112,7 +121,7 @@ Không có command sửa byte của bản gốc tại chỗ. Bản xử lý là
+ |---|---|
+ | `operation_id` | ID theo dõi từ receipt |
+ | `command_ref` | Command khởi tạo |
+-| `status` | `accepted`, `running`, `waiting`, `outcome_unknown`, `succeeded`, `failed` |
++| `status` | `accepted`, `running`, `waiting`, `outcome_unknown`, `succeeded`, `failed`, `unknown_legacy` (cho historical receipts cũ) |
+ | `progress` | Stage, số lượng hoặc phần trăm nếu đo được |
+ | `resource_refs` | Batch/job/stage/artifact liên quan |
+ | `started_at`, `updated_at`, `finished_at` | Mốc thời gian |
+@@ -145,6 +154,8 @@ Quy tắc:
+ 3. Nếu mất khoảng dữ liệu hoặc cursor hết hạn, UI query lại resource snapshot.
+ 4. SSE không đảm bảo thay thế audit log bền vững.
+ 5. Tooltip lỗi lấy `technical_detail_ref` qua query có quyền, không nhúng stack trace trong stream.
++6. Luồng SSE đóng vai trò tín hiệu invalidation để UI làm mới snapshot tài nguyên từ authoritative source; SSE không truyền thay thế snapshot trạng thái đầy đủ.
++7. Trình duyệt `EventSource.onerror` chuẩn không cung cấp HTTP status code hoặc response body; việc kiểm chứng các mã lỗi `CURSOR_*` được thực hiện qua HTTP / APIRequestContext.
+ 
+ ## 7. Cạnh tranh và áp dụng cấu hình
+ 
+diff --git a/docs/09-contracts/09-orchestration-contracts.md b/docs/09-contracts/09-orchestration-contracts.md
+index 61d9850..68e974d 100644
+--- a/docs/09-contracts/09-orchestration-contracts.md
++++ b/docs/09-contracts/09-orchestration-contracts.md
+@@ -47,6 +47,13 @@ Bất biến:
+ - Hệ thống tái khai thác tin đủ điều kiện cho tới khi đạt target hoặc không còn việc đủ điều kiện.
+ - Batch không quay lại từ tin đầu tiên sau restart; dùng checkpoint/allocation ledger.
+ 
++> **Quy định theo Amendment P8-START-001 (User approved cho Phase 7 / M2-P8):**
++> - Operation đi kèm với receipt của `StartProductionBatch` theo dõi chu trình thực thi của chính command này (`PREPARED` → `STARTED` → `SUCCEEDED`).
++> - Trạng thái `operation.status = SUCCEEDED` được xác lập khi command đã chuyển bền vững batch từ `CREATED` (rev 1) sang `RUNNING` (rev 2) trong cùng Unit of Work với activation evidence ràng buộc; command thực thi hoàn tất.
++> - Trạng thái `operation.SUCCEEDED` tuyệt đối KHÔNG đồng nghĩa với việc batch hoàn thành (`COMPLETED_TARGET`), video jobs hoàn thành hay sản xuất video kết thúc; và KHÔNG cấp quyền tạo `CompletionLedger`.
++> - Bất biến completion ledger tại CT-ORC-008, CT-ORC-009, CT-ORC-010 giữ nguyên giá trị tuyệt đối: batch chỉ đạt `COMPLETED_TARGET` khi completed ledger count đạt target với đầy đủ hard gates, variant reservation converted, exact output hash, và C `MediaUsage`. P8 fixture driver / test driver không được tạo ledger giả để tuyên bố production completion.
++
++
+ ## 3. Phân bổ video job
+ 
+ ### CT-ORC-002 — `AllocateVideoJob`
+diff --git a/src/controlplane/api/routes/control.py b/src/controlplane/api/routes/control.py
+index d0a0b33..6ada8e6 100644
+--- a/src/controlplane/api/routes/control.py
++++ b/src/controlplane/api/routes/control.py
+@@ -50,6 +50,25 @@ async def start_batch(request: Request) -> JSONResponse:
+     return JSONResponse(jsonable_encoder(receipt), status_code=202)
+ 
+ 
++@router.get("/batches")
++def batches(request: Request) -> dict[str, object]:
++    with request.app.state.manager.borrow_connection() as connection:
++        items = request.app.state.query_service.batches(
++            connection=connection, workspace_id=_identity(request)["workspace_id"],
++        )
++    return {"items": items, "next_cursor": None}
++
++
++@router.get("/batches/{batch_id}")
++def batch(request: Request, batch_id: str) -> dict[str, object]:
++    batch_id = str(uuid.UUID(batch_id))
++    with request.app.state.manager.borrow_connection() as connection:
++        return request.app.state.query_service.batch(
++            connection=connection, workspace_id=_identity(request)["workspace_id"],
++            batch_id=batch_id,
++        )
++
++
+ @router.get("/jobs")
+ def jobs(request: Request) -> dict[str, object]:
+     with request.app.state.manager.borrow_connection() as connection:
+diff --git a/src/controlplane/application/control_api/commands.py b/src/controlplane/application/control_api/commands.py
+index 7b9387f..66bb989 100644
+--- a/src/controlplane/application/control_api/commands.py
++++ b/src/controlplane/application/control_api/commands.py
+@@ -35,6 +35,11 @@ class ConfigScopePort(Protocol):
+                 scope_key: str) -> Any | None: ...
+ 
+ 
++class InitialExecutionPort(Protocol):
++    def create(self, *, workspace_id: str, operation_id: str, receipt_id: object,
++               batch_id: str, actor_id: str) -> None: ...
++
++
+ class ControlApiCommandService:
+     def __init__(self, *, uow_factory: Callable[[], Any],
+                  idempotency_factory: Callable[[Any], IdempotencyPort],
+@@ -42,7 +47,8 @@ class ControlApiCommandService:
+                  outbox_factory: Callable[[Any], OutboxPort],
+                  start_batch_service: StartBatchService,
+                  config_scope_factory: Callable[[Any], ConfigScopePort],
+-                 config_service: Any, config_repository: Any) -> None:
++                 config_service: Any, config_repository: Any,
++                 initial_execution_factory: Callable[[Any], InitialExecutionPort] | None = None) -> None:
+         self._uow_factory = uow_factory
+         self._idempotency_factory = idempotency_factory
+         self._receipt_fields_factory = receipt_fields_factory
+@@ -51,6 +57,7 @@ class ControlApiCommandService:
+         self._config_scope_factory = config_scope_factory
+         self._config_service = config_service
+         self._config_repository = config_repository
++        self._initial_execution_factory = initial_execution_factory
+ 
+     @staticmethod
+     def _idempotency_check(repo: IdempotencyPort, *, workspace_id: str,
+@@ -97,6 +104,11 @@ class ControlApiCommandService:
+                 resource_ref={"kind": "production_batch", "batch_id": batch_id},
+                 current_revision=None,
+             )
++            if self._initial_execution_factory is not None:
++                self._initial_execution_factory(connection).create(
++                    workspace_id=workspace_id, operation_id=operation_id,
++                    receipt_id=receipt["receipt_id"], batch_id=batch_id, actor_id=actor_id,
++                )
+             idempotency.create_record(
+                 workspace_id=workspace_id, command_name="StartProductionBatch",
+                 idempotency_key=idempotency_key, request_hash=digest,
+diff --git a/src/controlplane/application/control_api/query_ports.py b/src/controlplane/application/control_api/query_ports.py
+index 67da018..163dee7 100644
+--- a/src/controlplane/application/control_api/query_ports.py
++++ b/src/controlplane/application/control_api/query_ports.py
+@@ -8,6 +8,8 @@ from typing import Any, Callable, Protocol
+ class ControlQueryPort(Protocol):
+     def operations(self, *, workspace_id: str) -> list[dict[str, object]]: ...
+     def operation(self, *, workspace_id: str, operation_id: str) -> dict[str, object] | None: ...
++    def batches(self, *, workspace_id: str) -> list[dict[str, object]]: ...
++    def batch(self, *, workspace_id: str, batch_id: str) -> dict[str, object] | None: ...
+     def jobs(self, *, workspace_id: str) -> list[dict[str, object]]: ...
+     def job(self, *, workspace_id: str, job_id: str) -> dict[str, object] | None: ...
+     def configs(self, *, workspace_id: str) -> list[dict[str, object]]: ...
+@@ -29,6 +31,17 @@ class ControlApiQueryService:
+             raise LookupError("operation not found")
+         return item
+ 
++    def batches(self, *, connection: Any, workspace_id: str) -> list[dict[str, object]]:
++        return self._repository_factory(connection).batches(workspace_id=workspace_id)
++
++    def batch(self, *, connection: Any, workspace_id: str, batch_id: str) -> dict[str, object]:
++        item = self._repository_factory(connection).batch(
++            workspace_id=workspace_id, batch_id=batch_id,
++        )
++        if item is None:
++            raise LookupError("batch not found")
++        return item
++
+     def jobs(self, *, connection: Any, workspace_id: str) -> list[dict[str, object]]:
+         return self._repository_factory(connection).jobs(workspace_id=workspace_id)
+ 
+diff --git a/src/controlplane/infrastructure/db/control_api_commands.py b/src/controlplane/infrastructure/db/control_api_commands.py
+index db00561..144ceea 100644
+--- a/src/controlplane/infrastructure/db/control_api_commands.py
++++ b/src/controlplane/infrastructure/db/control_api_commands.py
+@@ -9,6 +9,7 @@ from psycopg.types.json import Jsonb
+ from controlplane.application.config_security import ConfigRevisionRepository, ConfigRevisionService
+ from controlplane.application.control_api.commands import ControlApiCommandService
+ from controlplane.application.orchestration.start_batch import StartBatchService
++from controlplane.infrastructure.db.admin_execution import PostgresInitialExecution
+ from controlplane.infrastructure.db.config_security import (
+     PostgresConfigEventSink, PostgresConfigSecurityRepository,
+ )
+@@ -67,4 +68,5 @@ def compose_command_service(uow_factory: Callable[[], Any]) -> ControlApiCommand
+         config_repository=ConfigRevisionRepository(
+             PostgresConfigSecurityRepository, PostgresConfigEventSink,
+         ),
++        initial_execution_factory=PostgresInitialExecution,
+     )
+diff --git a/src/controlplane/infrastructure/db/control_api_queries.py b/src/controlplane/infrastructure/db/control_api_queries.py
+index 21def96..3143fd8 100644
+--- a/src/controlplane/infrastructure/db/control_api_queries.py
++++ b/src/controlplane/infrastructure/db/control_api_queries.py
+@@ -12,8 +12,10 @@ class PostgresControlQueries:
+     def operations(self, *, workspace_id: str) -> list[dict[str, object]]:
+         rows = self._connection.execute(
+             "SELECT r.operation_id::text,r.command_id,r.receipt_id::text,r.disposition,"
+-            "r.resource_ref,r.accepted_at,p.event_kind,p.summary "
++            "r.resource_ref,r.accepted_at,p.event_kind,p.summary,e.status,e.revision "
+             "FROM controlplane.cp_command_receipts r "
++            "LEFT JOIN controlplane.cp_operation_executions e "
++            "ON e.workspace_id=r.workspace_id AND e.operation_id=r.operation_id "
+             "LEFT JOIN LATERAL (SELECT event_kind,summary FROM controlplane.cp_operation_stream "
+             "WHERE workspace_id=r.workspace_id AND operation_id=r.operation_id "
+             "ORDER BY stream_event_id DESC LIMIT 1) p ON true "
+@@ -26,8 +28,10 @@ class PostgresControlQueries:
+     def operation(self, *, workspace_id: str, operation_id: str) -> dict[str, object] | None:
+         row = self._connection.execute(
+             "SELECT r.operation_id::text,r.command_id,r.receipt_id::text,r.disposition,"
+-            "r.resource_ref,r.accepted_at,p.event_kind,p.summary "
++            "r.resource_ref,r.accepted_at,p.event_kind,p.summary,e.status,e.revision "
+             "FROM controlplane.cp_command_receipts r "
++            "LEFT JOIN controlplane.cp_operation_executions e "
++            "ON e.workspace_id=r.workspace_id AND e.operation_id=r.operation_id "
+             "LEFT JOIN LATERAL (SELECT event_kind,summary FROM controlplane.cp_operation_stream "
+             "WHERE workspace_id=r.workspace_id AND operation_id=r.operation_id "
+             "ORDER BY stream_event_id DESC LIMIT 1) p ON true "
+@@ -41,11 +45,34 @@ class PostgresControlQueries:
+         # A stream event is not automatically an execution-state fact.
+         return {
+             "operation_id": row[0], "command_ref": row[1], "receipt_id": row[2],
+-            "status": "accepted", "resource_refs": [row[4]] if row[4] else [],
++            "status": (row[8].lower() if row[8] is not None else "unknown_legacy"),
++            "revision": row[9], "resource_refs": [row[4]] if row[4] else [],
+             "accepted_at": row[5], "latest_event_kind": row[6],
+             "latest_safe_summary": row[7],
+         }
+ 
++    def batches(self, *, workspace_id: str) -> list[dict[str, object]]:
++        rows = self._connection.execute(
++            "SELECT batch_id,status,target_count,revision,created_at,updated_at "
++            "FROM controlplane.cp_production_batches WHERE workspace_id=%s "
++            "ORDER BY created_at DESC,batch_id DESC LIMIT 100",
++            (workspace_id,),
++        ).fetchall()
++        return [self._batch_row(row) for row in rows]
++
++    def batch(self, *, workspace_id: str, batch_id: str) -> dict[str, object] | None:
++        row = self._connection.execute(
++            "SELECT batch_id,status,target_count,revision,created_at,updated_at "
++            "FROM controlplane.cp_production_batches WHERE workspace_id=%s AND batch_id=%s",
++            (workspace_id, batch_id),
++        ).fetchone()
++        return self._batch_row(row) if row is not None else None
++
++    @staticmethod
++    def _batch_row(row: Any) -> dict[str, object]:
++        return {"batch_id": row[0], "status": row[1], "target_count": row[2],
++                "revision": row[3], "created_at": row[4], "updated_at": row[5]}
++
+     def jobs(self, *, workspace_id: str) -> list[dict[str, object]]:
+         rows = self._connection.execute(
+             "SELECT job_id,batch_id,status,snapshot_ref,revision,created_at "

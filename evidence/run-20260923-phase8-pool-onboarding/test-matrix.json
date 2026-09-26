@@ -1,0 +1,49 @@
+{
+  "run_id": "run-20260923-phase8-pool-onboarding",
+  "checks": [
+    {
+      "identity": "SOURCE_UNIT_SELECTOR_AFFINITY_RETRY",
+      "classification": "SIMULATED",
+      "result": "PASS",
+      "oracle": "Focused Go tests for round-robin, same/different session affinity, unavailable selection, all-cooldown response, credential retry budget, overload failover and request-scoped 429 stop"
+    },
+    {
+      "identity": "SOURCE_UNIT_ANTIGRAVITY_429",
+      "classification": "SIMULATED",
+      "result": "PASS",
+      "oracle": "Antigravity 429 classification and internal retry tests pass"
+    },
+    {
+      "identity": "SOURCE_UNIT_TRACE_HEADER",
+      "classification": "SIMULATED",
+      "result": "PASS",
+      "oracle": "Trace ID format and response header middleware tests pass"
+    },
+    {
+      "identity": "LIVE_ROUTING_GEMINI_HIGH",
+      "classification": "LIVE_ROUTING",
+      "result": "PARTIAL_PASS",
+      "oracle": "14 bounded sequential requests return HTTP 200 and five distinct credential aliases are selected; same session A retains G1",
+      "limit": "Two registered Gemini identities were not selected in observed requests; distribution uniformity and quota remaining are unknown"
+    },
+    {
+      "identity": "LIVE_FAILOVER_GEMINI_HIGH",
+      "classification": "LIVE_FAILOVER",
+      "result": "NOT_OBSERVED",
+      "oracle": "No natural 429 or unavailable credential transition arose during live probes"
+    },
+    {
+      "identity": "AO_TOOL_LOOP_EXISTING_CP1_WORKER",
+      "classification": "AO_TOOL_LOOP",
+      "result": "OBSERVED_CP1_AUDIT_BLOCKED",
+      "oracle": "Existing worker session ai-auto-video-creator-2 resumed using its existing Codex rollout, accepted followup, ran command activities and edited the existing worktree; turn completed at CP1 audit"
+    },
+    {
+      "identity": "CP1_TLS_BOOTSTRAP_BROWSER_RED",
+      "classification": "CP1",
+      "result": "BLOCKED_TRUST_STORE_PROMPT",
+      "oracle": "IPC isolated 6/6 PASS; certificate trust not installed because Windows Security Warning requires interactive confirmation; three browser identities collected but zero executed, zero RED observed",
+      "limit": "Backend RED revision behavior was observed in prior CP1 run; PostgreSQL run-owned container stopped after audit"
+    }
+  ]
+}

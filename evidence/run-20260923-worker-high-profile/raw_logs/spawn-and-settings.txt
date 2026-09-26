@@ -1,0 +1,4 @@
+REDACTED METADATA ONLY; no request body or capability.
+One new session: ao-phase5-repo-15, kind worker, harness codex.
+Session readback before first turn: model gemini-3.8-flash-high, reasoningEffort high.
+Project default after turn: model gemini-3.8-flash-high, effort low.

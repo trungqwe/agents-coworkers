@@ -1,0 +1,4 @@
+REDACTED METADATA ONLY; no upstream request or secret.
+AO settings -> Codex turn/start model and effort: SOURCE MAPPING.
+OpenAI Responses reasoning.effort -> Antigravity request.generationConfig.thinkingConfig.thinkingLevel: SOURCE MAPPING.
+Actual Codex wire and final translated request: NOT OBSERVED.

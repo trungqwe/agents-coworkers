@@ -4,10 +4,11 @@
 
 The primary objective of this integration is to establish a practical, reliable, multi-agent software-development workforce (control plane) around **Agent Orchestrator (AO)**, utilizing **CLIProxyAPI** as a local routing gateway and **Codex CLI** as a unified agent client harness.
 
-This repository (`agents-coworkers`) is the reusable workforce/control plane: it contains integration configs, patches, runbooks, and verification infrastructure that are independent of any single product codebase. **[AI-Auto-Video-Creator](https://github.com/trungqwe/AI-Auto-Video-Creator)** is the first intended product workload (currently `READ-ONLY` per `INV-001`; workload deployment requires explicit user authorization).
+This repository (`agents-coworkers`) is the reusable workforce/control plane: it contains integration configs, patches, runbooks, and verification infrastructure that are independent of any single product codebase. **[AI-Auto-Video-Creator](https://github.com/trungqwe/AI-Auto-Video-Creator)** is a sample workload used for direct debugging and verification; it is not an exit gate for the workforce product.
 
-- **Orchestrator Role**: Plans, reviews, audits, and issues directives using `gpt-6-astra` (reasoning effort: `low`, harness: `codex`, kind: `orchestrator`, mode: `chat`).
-- **Worker Roles**: Concurrently implement tasks in isolated git worktrees using `gemini-3.8-flash-high` (reasoning effort: `low`, harness: `codex`, kind: `worker`, mode: `chat`).
+- **Orchestrator Role**: Plans, reviews, audits, and issues directives. Model/effort are selected by the user per run from the AO/gateway catalog and eligible credential pool; `kind=orchestrator`, `harness=codex` remain role/interface attributes.
+- **Worker Roles**: Concurrently implement tasks in isolated git worktrees. Model/effort are likewise selected per run; no model name is synonymous with the worker role.
+- **Profile Rule**: A requested profile is usable only after catalog presence, credential eligibility and exact AO session readback. Never silently fall back to another model/provider. Failure of one profile does not block another profile/provider with independently verified capacity.
 - **Target Scale**: Target worker range: 3–7; Initial runtime verification target: 3; Maximum proven live concurrency: 3 (empirically proven in Gate 10).
 - **Core Value Proposition**: Minimize moving parts, eliminate manual coordination overhead, isolate code changes via native git worktrees, prevent merge collisions, and optimize token/context cost.
 

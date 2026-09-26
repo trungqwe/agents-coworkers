@@ -1,0 +1,102 @@
+{
+  "run_id": "m2-p8-cp2a-backend-20260924",
+  "status": "CP2A_BACKEND_IMPLEMENTED_AUDIT_BLOCKED",
+  "authority": "CP2A backend only; delegated_user_authorization_cp1 for debug/test/cleanup",
+  "provenance": {
+    "ao_session": "ai-auto-video-creator-2",
+    "worktree": "C:\\Users\\Admin\\.ao\\data\\worktrees\\ai-auto-video-creator\\ai-auto-video-creator-2",
+    "baseline": "4a7c8c921b7e05066505d51b168a02c3fde61317",
+    "worker_profile": "worker/codex/gemini-3.8-flash-high/high",
+    "implementation_note": "Coordinator patched same AO worktree after AO patch commands root130/root135 were rejected for invalid/no-op patches; no new session/worktree"
+  },
+  "cp1": {
+    "status": "CP1_ACCEPTED",
+    "evidence_run": "m2-p8-run-b81a7faa2c86",
+    "prerequisites": "PASS",
+    "browser": "3/3 UPSTREAM_PATH_RED",
+    "backend_red": "prior partial run; source was unchanged at CP1 audit",
+    "p8_complete": false
+  },
+  "red_green": [
+    {
+      "behavior": "Initial PREPARED revision 0",
+      "red": "P8_004 missing revision assertion, exit 1",
+      "green": "P8_004 included in 8/8 pass"
+    },
+    {
+      "behavior": "Claim transition",
+      "red": "P8_005 NotImplementedError, exit 1",
+      "green": "P8_005 included in 8/8 pass"
+    },
+    {
+      "behavior": "Accepted event checkpoint prerequisite",
+      "red": "P8_005 did not reject missing checkpoint, exit 1",
+      "green": "P8_005 included in 8/8 pass"
+    },
+    {
+      "behavior": "Same-evidence replay",
+      "red": "P8_006 stale revision conflict for exact replay, exit 1",
+      "green": "P8_006 included in 8/8 pass"
+    },
+    {
+      "behavior": "One-shot safe error driver",
+      "red": "P8_010 missing arm method, exit 1",
+      "green": "P8_010 included in 8/8 pass"
+    }
+  ],
+  "checks": [
+    {
+      "target": "tests/m2/test_p8_execution_state.py",
+      "result": "8 passed",
+      "exit_code": 0,
+      "notes": "Includes initial/claim/confirm, one HTTP outbox, accepted checkpoint, CAS, replay, rollback, legacy, isolation, safe error"
+    },
+    {
+      "target": "P7A control API and hardening",
+      "result": "40 passed",
+      "exit_code": 0
+    },
+    {
+      "target": "P7B SSE stream",
+      "result": "5 passed",
+      "exit_code": 0
+    },
+    {
+      "target": "P7B hardening excluding nested M1 regression",
+      "result": "37 passed in three bounded groups",
+      "exit_code": 0,
+      "notes": "Nested M1 test remains blocked with genuine live credential"
+    },
+    {
+      "target": "M1 all",
+      "result": "54 passed then live E3 failed",
+      "exit_code": 1,
+      "notes": "Missing Credentials/client_secret.json in AO worktree and Product root; no credential copied/generated, no OAuth"
+    },
+    {
+      "target": "M1 excluding live E3",
+      "result": "92 passed, 1 deselected",
+      "exit_code": 0,
+      "notes": "Used pinned Product root venv executable read-only because accepted P0 environment evidence binds its exact path/hash"
+    },
+    {
+      "target": "git diff --check",
+      "result": "PASS",
+      "exit_code": 0
+    }
+  ],
+  "transaction_proof": "Initial receipt/idempotency/batch/operation/one outbox rollback on injected pre-commit error; claim CAS/outbox/checkpoint/stream rollback on injected crash after projection before UoW commit; exact-evidence replay leaves counts unchanged. P7B accepted PostgresEventProcessor/stream writer and ordering fence reused.",
+  "limits": [
+    "No UI GREEN or production launcher",
+    "M1 93/93 cannot be claimed without genuine live E3 credential/proof; accepted oracle not modified",
+    "Full P8 remains open; CP2A audit not accepted",
+    "One ignored copied Temporal binary/config folder remains in AO worktree because cleanup command was denied by tool policy; exact path scratch/temporal_1.31.2, source copy Product root untouched"
+  ],
+  "cleanup": {
+    "postgres_run_owned": "Two exact labelled containers removed and verified absent",
+    "trust_store": "Not changed",
+    "product_root": "clean at baseline",
+    "temporal_copy": "PENDING_POLICY_CLEANUP"
+  },
+  "security": "Evidence is redacted metadata only; no email, token, auth header, cookie, capability, request body, or raw provider log."
+}

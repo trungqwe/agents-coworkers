@@ -1,0 +1,33 @@
+BASELINE
+git commit: 70a52648f9a147dca0eef59dc2e5c696bdbce4cc
+Phase 7D local checks before commit: go test ./... exit 0; race exit 0; vet exit 0; diff-check exit 0; final 7D manifest 17/17.
+
+AO BOOTSTRAP
+project add exit 0
+orchestrator spawn exit 0
+settings/readback: orchestrator/codex/gpt-5.5/low, accept-edits
+send delivery p7e-bootstrap-001 exit 0; accepted as one normal Chat turn
+turn result: failed
+gateway status: 503 auth_unavailable
+upstream observed: HTTP 402 deactivated_workspace
+retry count after failure: 0
+
+PHASE 7E ACCEPTANCE
+task graph: NOT OBSERVED
+two implementation lanes: NOT CREATED
+orchestrator review/rework: NOT OBSERVED
+integration worker/tests: NOT OBSERVED
+CLI run/status: NOT IMPLEMENTED
+self-host CLI live proof: NOT RUN
+
+CLEANUP
+session kill exit 0; session cleanup exit 0 (workspace already gone); project remove exit 0; AO stop exit 0
+gateway PID ownership matched run config and was stopped; ports 3002/8318 false
+temporary authentication copy deleted; shared credential store unchanged
+temp root ownership/process/listener checked; recursive LiteralPath removal rejected before execution: CLEANUP_BLOCKED_POLICY
+
+POST-CLEANUP LOCAL VERIFICATION (NO PROVIDER)
+go test -count=1 ./...: exit 0; recovery 1.150s; integration 0.208s
+go test -race -count=1 ./internal/recovery: exit 0; 2.218s
+go vet ./...: exit 0
+git diff --check: exit 0; LF-to-CRLF informational warning on roadmap only

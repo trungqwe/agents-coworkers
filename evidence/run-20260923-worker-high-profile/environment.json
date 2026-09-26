@@ -1,0 +1,12 @@
+{
+  "checkpoint": "Phase 7 candidate worker profile verification; isolated fixture only",
+  "date_utc": "2026-09-23",
+  "ao_daemon": {"port": 3001, "pid": 39332, "health": "matched running.json"},
+  "gateway": {"port": 8317, "pid": 34684, "credential_source": "existing private runtime configuration; in-memory read only", "payload_override_present": true, "payload_override_target": "systemInstruction.parts.0.text", "request_logging_enabled_for_checkpoint": false},
+  "catalog": {"gateway_model_count": 25, "candidate_model_present": true, "base_model_present": false, "ao_codex_model_count": 19, "candidate_efforts": ["low", "medium", "high"]},
+  "fixture": {"project_id": "ao-phase5-repo", "root_head": "60aa78498d2e5325c96545d73d006e1f10b812a4", "root_clean": true, "session_id": "ao-phase5-repo-15", "branch": "ao/ao-phase5-repo-15/root", "worktree_head": "60aa78498d2e5325c96545d73d006e1f10b812a4"},
+  "profile": {"requested": {"kind": "worker", "harness": "codex", "model": "gemini-3.8-flash-high", "effort": "high"}, "session_readback": {"kind": "worker", "harness": "codex", "model": "gemini-3.8-flash-high", "effort": "high"}, "project_default_after": {"model": "gemini-3.8-flash-high", "effort": "low"}},
+  "turn": {"id": "ca8574ee-6068-4c60-83da-b1c7fff9ab59", "requested_at_utc": "2026-09-23T07:40:40Z", "completed_at_utc": "2026-09-23T07:42:22Z", "state": "completed", "completed_command_activities": 11, "failed_command_activities": 0, "manual_turn_retries": 0},
+  "git_baselines": {"agents_coworkers": "0190e925cd552b936250c74c29cbc272bb477e49", "agent_orchestrator": "1140dd62dc7bb588b987e2c44aa1ff4796fa732b", "cliproxyapi": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e", "product": "4a7c8c921b7e05066505d51b168a02c3fde61317"},
+  "redaction": "No raw auth headers, token, capability, private config value, request body, or unsanitized logs persisted."
+}

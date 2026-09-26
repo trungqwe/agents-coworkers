@@ -1,0 +1,4 @@
+REDACTED METADATA ONLY; not a raw endpoint response.
+AO: one validated loopback daemon, port 3001, PID 39332, health matched running.json.
+Fixture root: ao-phase5-repo, HEAD 60aa78498d2e5325c96545d73d006e1f10b812a4, clean.
+Product: no action; Git clean.

@@ -2,7 +2,7 @@
 
 This ledger records architectural decisions, their current validation status, evidence maturity, and revisit triggers.
 
-- **Active Roadmap Phase**: **Phase 6 — 3-Worker Concurrency Proof (COMPLETE)**; **Phase 7 remains NOT AUTHORIZED**; **Phase 8 remains DEFERRED / OPTIONAL** (authoritative phase status and exit criteria are maintained in [04-ROADMAP.md](04-ROADMAP.md)).
+- **Active Roadmap Phase**: **Phase 7 — đang thực thi theo checkpoint**; Phase 8 là `PARTIAL_EVIDENCE / OPTIONAL` (trạng thái authoritative tại [04-ROADMAP.md](04-ROADMAP.md)).
 
 ## Status Definitions
 
@@ -27,10 +27,17 @@ This ledger records architectural decisions, their current validation status, ev
 ### D001 — Candidate A Accepted
 - **Decision Status**: `ACCEPTED`
 - **Evidence Maturity**: `LIVE_RUNTIME`
-- **Decision**: Adopt Candidate A (AO Orchestrator `gpt-6-astra` + AO Workers `gemini-3.8-flash-high`, unified Codex harness via CLIProxyAPI gateway) as the accepted architectural baseline (empirically validated across Gates 1–10).
+- **Decision**: Adopt Candidate A (AO role-based orchestration + unified Codex harness via CLIProxyAPI gateway) as the accepted architectural baseline. Model/effort are run-scoped user choices, not role identities. GPT-6 Astra/low, GPT-5.5/low and Gemini high remain historical profiles of specific runs.
 - **Reason**: Maximizes harness uniformity, minimizes client diversity, and leverages existing provider pools.
 - **Evidence**: Source inspection of AO Codex adapter, CLIProxyAPI translators, schema tests.
 - **Revisit Trigger**: Revisit Candidate A only after a runtime gate has an unresolved, reproducible failure that has been root-cause isolated to a Candidate A architectural boundary. Configuration mistakes, authentication mistakes, transient provider errors, or unrelated local failures are not architecture-revisit triggers. Candidate B/C must remain dormant until such a failure is proven.
+
+### D013 — Run-Scoped Model Profiles
+- **Decision Status**: `ACCEPTED`
+- **Evidence Maturity**: `LIVE_RUNTIME`
+- **Decision**: User selects orchestrator and worker model/effort for each run. Before dispatch, verify gateway/AO catalog presence, credential eligibility and exact session readback. Do not silently substitute models. A profile-specific failure blocks only that profile unless evidence shows a wider provider/pool outage.
+- **Evidence**: Historical GPT-6 Astra/low and GPT-5.5/low orchestrator runs plus Gemini high worker/orchestrator runs; the failed GPT-5.5 Phase 7E bootstrap remains recorded as `BLOCKED_PROFILE_ELIGIBILITY_GPT55`, not global capacity exhaustion.
+- **Revisit Trigger**: AO introduces an authoritative policy layer that explicitly binds roles to models and the user adopts that policy.
 
 ### D002 — Unified Codex Client Harness
 - **Decision Status**: `PROVISIONAL`

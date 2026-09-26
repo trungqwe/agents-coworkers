@@ -1,0 +1,53 @@
+{
+  "run_id": "run-20260923-phase8-pool-onboarding",
+  "date": "2026-09-23",
+  "status": "IN_PROGRESS_POOL_VERIFICATION",
+  "source": {
+    "cliproxyapi_head": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e",
+    "gateway_binary_version": "dev",
+    "gateway_binary_commit": "none",
+    "gateway_binary_built_at": "unknown",
+    "gateway_binary_sha256": "e9da39b2491856be2d3711e20be89690f3465e2a5b7a469ba1a29aff7ab342d2",
+    "binary_source_correspondence": "NOT_ESTABLISHED"
+  },
+  "routing_config_redacted": {
+    "strategy": "round-robin",
+    "session_affinity": true,
+    "session_affinity_ttl": "4h",
+    "session_affinity_subagents": false,
+    "request_retry": 3,
+    "max_retry_credentials": 0,
+    "max_retry_interval_seconds": 15
+  },
+  "pool": {
+    "codex_registered": 1,
+    "gemini_registered": 7,
+    "gemini_distinct_identities": 7,
+    "gemini_loaded_lower_bound": 5,
+    "gemini_target_model_eligible_lower_bound": 5,
+    "gemini_observed_selected": 5,
+    "gemini_successful_credentials": 5,
+    "codex_loaded_or_eligible": "NOT_OBSERVED",
+    "unselected_gemini_eligibility": "UNKNOWN",
+    "quota_remaining": "NOT_OBSERVED"
+  },
+  "live": {
+    "target_model": "gemini-3.8-flash-high",
+    "effort": "high",
+    "fixture_requests": 14,
+    "http_200": 14,
+    "http_429": 0,
+    "distinct_selected_credentials": 5,
+    "live_failover": "NOT_OBSERVED",
+    "ao_tool_loop": "OBSERVED_COMMAND_ACTIVITIES; CP1_AUDIT_BLOCKED_TRUST_STORE_PROMPT",
+    "concurrency_proven": 3
+  },
+  "scope": {
+    "oauth_interactive_by_owner": true,
+    "provider_or_model_changed": false,
+    "project_default_changed": false,
+    "gateway_or_ao_patched": false,
+    "commit_push_merge": false,
+    "product_root_written": false
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "checkpoint": "worker-high-profile-candidate",
+  "existing_gates_1_to_10": "UNCHANGED; prior evidence belongs to old low-effort configuration",
+  "oracles": [
+    {"id": "isolated_single_worker", "result": "PASS", "evidence": "One new AO session/worktree ao-phase5-repo-15, fixture root clean"},
+    {"id": "profile_readback", "result": "PASS", "evidence": "AO session model gemini-3.8-flash-high, effort high, kind worker, harness codex; default remains low"},
+    {"id": "catalog", "result": "PASS", "evidence": "Active gateway and AO Codex catalog contain candidate ID; base ID absent"},
+    {"id": "codex_turn_start_wire", "result": "NOT_OBSERVED", "evidence": "Source maps session settings to turn/start model and effort; wire not captured"},
+    {"id": "gateway_translated_thinking_level", "result": "NOT_OBSERVED", "evidence": "Source maps OpenAI Responses reasoning.effort to Antigravity request.generationConfig.thinkingConfig.thinkingLevel; final request not captured safely"},
+    {"id": "upstream_tool_roundtrip", "result": "PASS", "evidence": "Turn completed, 11 completed command activities, fixture edit and independent Python assertions exit 0"},
+    {"id": "diff_hygiene", "result": "WARN", "evidence": "git diff --check exit 2: new blank line at EOF in calc.py"},
+    {"id": "mcp_codex_apps", "result": "WARN", "evidence": "MCP initialization reported OAuth token_revoked; no OAuth action taken; core worker turn completed"},
+    {"id": "p8_succeeded_contract", "result": "OPEN", "evidence": "Must define source-backed SUCCEEDED contract and evidence before terminal RED; not part of this checkpoint"}
+  ],
+  "candidate_decision": "HOLD_NOT_VERIFIED_HIGH"
+}

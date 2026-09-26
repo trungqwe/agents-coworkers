@@ -1,0 +1,78 @@
+{
+  "run_id": "m2-p8-run-b81a7faa2c86",
+  "classification": "CP1_AUDIT_READY",
+  "provenance": {
+    "ao_session": "ai-auto-video-creator-2",
+    "worktree": "C:\\Users\\Admin\\.ao\\data\\worktrees\\ai-auto-video-creator\\ai-auto-video-creator-2",
+    "product_baseline": "4a7c8c921b7e05066505d51b168a02c3fde61317",
+    "worker": {
+      "kind": "worker",
+      "harness": "codex",
+      "model": "gemini-3.8-flash-high",
+      "effort": "high"
+    },
+    "approval": "delegated_user_authorization_cp1"
+  },
+  "prerequisites": {
+    "server_liveness": "PASS",
+    "negative_tls": "PASS",
+    "positive_tls": "PASS",
+    "ipc_security": "7/7 PASS",
+    "navigation_http_200": "3/3",
+    "root_mount": "3/3"
+  },
+  "browser": {
+    "child_exit_code": 1,
+    "timeout": false,
+    "identities": [
+      {
+        "identity": "test_tst_m2_p8_001_react_ag_grid_rendering_vietnamese_utf8",
+        "classification": "UPSTREAM_PATH_RED",
+        "first_step": "behavior:operations_grid",
+        "file": "m2_p8_admin_ui.spec.ts",
+        "line": 15
+      },
+      {
+        "identity": "test_tst_m2_p8_002_browser_e2e_real_command_sse_dom_flow",
+        "classification": "UPSTREAM_PATH_RED",
+        "first_step": "behavior:target_input",
+        "file": "m2_p8_admin_ui.spec.ts",
+        "line": 30
+      },
+      {
+        "identity": "test_tst_m2_p8_003_safe_error_inspection_modal",
+        "classification": "UPSTREAM_PATH_RED",
+        "first_step": "behavior:start_form",
+        "file": "m2_p8_admin_ui.spec.ts",
+        "line": 45
+      }
+    ]
+  },
+  "backend_red": {
+    "source_sha256": "CB6C576D12D7909A31B366786745E5E63B467053D7ED1F042674FB08D97B0375",
+    "prior_evidence": "../run-m2-p8-cp1-partial-20260923154856/red-observations.md",
+    "rerun": false,
+    "reason": "Related backend source unchanged"
+  },
+  "diagnosis": {
+    "native_crash": "python313.dll/0xc0000005 observed in earlier runs; race hypothesis not proven",
+    "post_ipc_patch": "Repeated targeted IPC/lifecycle checks passed; no native crash in final full run",
+    "cleanup_failure": "SERVER_STOP_FAILED at SERVER_STOP_JOIN in previous run",
+    "source_basis": "Pinned Uvicorn graceful-shutdown timeout default is unbounded; fixture joined for 5 seconds",
+    "fix": "Set fixture Uvicorn timeout_graceful_shutdown=2; held-stream HTTPS stop/join targeted check passed in 2.19 seconds"
+  },
+  "cleanup": {
+    "certificate_thumbprint": "AB9C8308092C047DA15A00EF55131C4CB6A06048",
+    "certificate_store": "REMOVED_AND_VERIFIED",
+    "key_directory": "ABSENT",
+    "server_and_playwright_processes": "ABSENT",
+    "port_8000": "FREE",
+    "postgres_container": "REMOVED_AFTER_OWNERSHIP_VERIFICATION",
+    "stage": "COMPLETE"
+  },
+  "limits": [
+    "UPSTREAM_PATH_RED does not establish command/SSE/modal behavior",
+    "No CP2 or P9/M3/Module A authority",
+    "No commit, push, or merge"
+  ]
+}

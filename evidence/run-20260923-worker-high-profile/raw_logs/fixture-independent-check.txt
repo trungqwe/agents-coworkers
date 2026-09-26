@@ -1,0 +1,4 @@
+REDACTED METADATA ONLY; no source content.
+Independent python -B assertions: exit 0.
+Worktree Git: calc.py modified only; 4 insertions.
+git diff --check: exit 2, new blank line at EOF.

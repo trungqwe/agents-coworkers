@@ -75,8 +75,14 @@ Single delta outside accepted A/B commits: internal/recovery/dispatcher_test.go 
 - Task ID: P7E-SELFHOST-TASK-001
 - Delivery ID: p7e-selfhost-delivery-001
 - Preflight: Verified session exists, project ID, kind, harness, model, effort, branch, exclusive lock.
+  * reasoningEffort=high được executable preflight kiểm tra gián tiếp qua AO conversation settings trước khi Send thành công.
+  * ao-session-readback.json không chứa trường effort trực tiếp; ghi rõ giới hạn này.
 - Initial State: WAITING_RETRY
 - Step 1: Preflight PASS, State -> DELIVERY_UNCERTAIN -> DELIVERED, Turn ID 5f8b27a5-d88e-4c1e-a373-5635c898d310
-- Execution: Codex session on Gemini 3.7 executed Get-Content go.mod, emitted exact receipt:
-  TASK_RECEIPT {"taskId":"P7E-SELFHOST-TASK-001","artifactSha256":"0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5","accepted":true}
+- Execution & Receipt: AO delivery, turn completion và TASK_RECEIPT binding: LIVE PASS.
+  * Việc worker thực sự gọi tool đọc go.mod: NOT OBSERVED trong durable artifact hiện có.
+  * Không dùng receipt lặp lại artifact SHA từ prompt để chứng minh tool call.
+  * Những giới hạn trên không hạ kết quả delivery/receipt/self-host LIVE.
+  * Receipt emitted:
+    TASK_RECEIPT {"taskId":"P7E-SELFHOST-TASK-001","artifactSha256":"0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5","accepted":true}
 - Step 2: recovery.exe observed turn completion, parsed receipt, validated task ID and artifact SHA, transitioned checkpoint to COMPLETED, SideEffect COMPLETED. Exit code 0.

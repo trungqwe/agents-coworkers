@@ -1,7 +1,10 @@
+# Historical locator record only; not a direct filesystem manifest for disposable test worktrees.
+# Four temporary worktree paths have been redacted to replace the local OS username with [REDACTED_USER].
 # SHA-256 of raw file bytes; fixture source hashes are from C's clean combined worktree.
-4033149a25e13d5753177a61759c82c87076aa1460fedd09ef84db5b25525fc0  C:/Users/Admin/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_arithmetic.py
-5a40c9bcaf3681f90acc785561f00740076a48d2e959764a0c32acc36966326a  C:/Users/Admin/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_division.py
-3ab22ce71d0243ad10b5288bbbab37a15f0e74dba86864346291b35ea707a053  C:/Users/Admin/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_calculator.py
-7a615219b6d721655a337153c0f717e13fc6bca153cc989de3d6571c9fe25224  C:/Users/Admin/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/tests/test_phase7_integration.py
+4033149a25e13d5753177a61759c82c87076aa1460fedd09ef84db5b25525fc0  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_arithmetic.py
+5a40c9bcaf3681f90acc785561f00740076a48d2e959764a0c32acc36966326a  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_division.py
+3ab22ce71d0243ad10b5288bbbab37a15f0e74dba86864346291b35ea707a053  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/pilot_calculator.py
+7a615219b6d721655a337153c0f717e13fc6bca153cc989de3d6571c9fe25224  C:/Users/[REDACTED_USER]/.ao/data/worktrees/ao-phase5-repo/ao-phase5-repo-21/tests/test_phase7_integration.py
 9a375532f3383dac52c37f16c479757c84b8ae32ee37734ff7acd12fbad529f5  docs/04-ROADMAP.md
 f4e0f6092b0e7b20baf585a22a660d248d131eda67996abec11d1dc8ff778330  evidence/run-20260924-phase7bc-integration-continuation/summary.md
+1b7535a5ff8689568a7a2037e6a55eb9798c3529270e27690f14fe30cd663252  evidence/run-20260924-phase7bc-integration-continuation/correction-note.md

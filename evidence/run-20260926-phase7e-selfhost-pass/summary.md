@@ -23,7 +23,7 @@ Nguồn: AO daemon cô lập tại `127.0.0.1:3005`, CLIProxyAPI gateway tại `
 - **Giải pháp deterministic**:
   - Tạo Git repo riêng trong `t.TempDir()`.
   - Tạo branch fixture có tên cố định thuộc riêng test: `fixture-test-branch`.
-  - Cấu hình local Git identity fixture: `user.name = "Test User"`, `user.email = "test@example.com"`.
+  - Cấu hình local Git identity fixture không phải dữ liệu người dùng: `user.name = "Test User"`, `user.email` là fixture Git identity không phải dữ liệu người dùng.
   - Tạo và commit artifact fixture trong repo tạm.
   - Lấy độc lập: expected artifact SHA-256 (`crypto/sha256`), expected Git HEAD (`git rev-parse HEAD`), expected branch (`fixture-test-branch`).
   - Gọi `GitArtifactReader.Observe()` trên repo fixture và assert nghiêm ngặt: SHA-256 chính xác, Git HEAD chính xác, Branch chính xác và không rỗng.
@@ -59,11 +59,11 @@ Nguồn: AO daemon cô lập tại `127.0.0.1:3005`, CLIProxyAPI gateway tại `
   - Task ID: `P7E-SELFHOST-TASK-001`, Delivery ID: `p7e-selfhost-delivery-001`, State: `WAITING_RETRY`.
   - Artifact: `go.mod` (SHA-256: `0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5`).
   - Git HEAD: `e80958331900b1fdd5e1190c0a75500bb1057157`.
-- **Preflight LIVE**: Executable `recovery.exe` xác thực chính xác project ID, session ID, kind, harness, model (`gemini-3.7-flash-high`), effort (`high`), branch (`ao/p7e-selfhost-worker`), và lease độc quyền.
+- **Preflight LIVE**: Executable `recovery.exe` xác thực chính xác project ID, session ID, kind, harness, model (`gemini-3.7-flash-high`), effort (`high`), branch (`ao/p7e-selfhost-worker`), và lease độc quyền. Giới hạn hồ sơ: `reasoningEffort=high` được executable preflight kiểm tra gián tiếp qua AO conversation settings trước khi Send thành công; `ao-session-readback.json` không chứa trường effort trực tiếp (ghi rõ giới hạn này).
 - **Delivery LIVE**: Gửi delivery qua AO `/conversation/steer-or-send`, turn ID `5f8b27a5-d88e-4c1e-a373-5635c898d310`. Checkpoint tự động chuyển `DELIVERED`.
-- **Execution & Receipt LIVE**: Model đọc `go.mod` và phát receipt chính thức:
+- **Execution & Receipt LIVE**: AO delivery, turn completion và TASK_RECEIPT binding: LIVE PASS. Giới hạn tool call: Việc worker thực sự gọi tool đọc `go.mod`: NOT OBSERVED trong durable artifact hiện có; không dùng receipt lặp lại artifact SHA từ prompt để chứng minh tool call. Model phát receipt chính thức:
   `TASK_RECEIPT {"taskId":"P7E-SELFHOST-TASK-001","artifactSha256":"0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5","accepted":true}`
-- **Completion LIVE**: Executable `recovery.exe` quan sát turn hoàn tất, bóc tách receipt, đối chiếu taskId và artifact SHA-256, chuyển trạng thái checkpoint thành `COMPLETED` và `SideEffect: COMPLETED`. Exit code: 0.
+- **Completion LIVE**: Executable `recovery.exe` quan sát turn hoàn tất, bóc tách receipt, đối chiếu taskId và artifact SHA-256, chuyển trạng thái checkpoint thành `COMPLETED` và `SideEffect: COMPLETED`. Exit code: 0. Những giới hạn trên không hạ kết quả delivery/receipt/self-host LIVE.
 - **Exit Code Matrix**:
   - Exit 0 [LIVE]: `recovery status` thành công; `recovery run` quan sát turn hoàn tất và chuyển checkpoint thành `COMPLETED`.
   - Exit 1 [LOCAL_EXECUTABLE/SIMULATED]: Lệnh `recovery cancel` bị từ chối hợp lệ (unsupported CLI command).
@@ -74,9 +74,10 @@ Nguồn: AO daemon cô lập tại `127.0.0.1:3005`, CLIProxyAPI gateway tại `
 ## 6. Phân loại Chứng cứ
 
 - **LIVE**:
+  - AO delivery, turn completion và TASK_RECEIPT binding: LIVE PASS (Exit 0).
   - Deterministic test fix và full suite PASS.
   - Orchestrator review ACCEPT qua AO API.
-  - Preflight kiểm tra project/session/model/effort/branch/HEAD/SHA-256.
+  - Preflight kiểm tra project/session/model/branch/HEAD/SHA-256 (`reasoningEffort=high` kiểm tra gián tiếp qua AO conversation settings trước khi Send thành công).
   - Executable recovery `status` và `run` chuyển dịch state `WAITING_RETRY` -> `DELIVERED` -> `COMPLETED`.
   - Parse `TASK_RECEIPT` và đối chiếu SHA-256 thật từ provider task hoàn tất (Exit 0).
   - Repo portability và executable self-host LIVE trên repo thứ hai `agents-coworkers`.
@@ -85,6 +86,7 @@ Nguồn: AO daemon cô lập tại `127.0.0.1:3005`, CLIProxyAPI gateway tại `
   - Exit 2: `recovery run` trên fixture checkpoint `BLOCKED` (exit 2).
   - Exit 3: `recovery run` timeout 90s hết hạn trước terminal state (exit 3; command `recovery run -checkpoint <RUN_TEMP>/checkpoint.json -workspace <RUN_TEMP>/ao-data/worktrees/p7e-continuation/p7e-continuation-3 -ao-url http://127.0.0.1:3005 -poll 1s -timeout 90s`, thực tế timeout 90s, nguồn trạng thái `context deadline exceeded`; không báo 1ms).
 - **NOT OBSERVED**:
+  - Việc worker thực sự gọi tool đọc `go.mod`: NOT OBSERVED trong durable artifact hiện có (không dùng receipt lặp lại artifact SHA từ prompt để chứng minh tool call; giới hạn này không hạ kết quả delivery/receipt/self-host LIVE).
   - Provider outage recovery LIVE: NOT OBSERVED.
   - Daemon restart recovery LIVE: NOT OBSERVED.
   - Stop LIVE: NOT OBSERVED.
@@ -92,8 +94,8 @@ Nguồn: AO daemon cô lập tại `127.0.0.1:3005`, CLIProxyAPI gateway tại `
 
 ## 7. Coordinator Intervention và Approval Provenance
 
-- Coordinator bootstrap runtime, cấu hình `approvalMode=accept-edits` và `reasoningEffort=high` qua AO API.
-- Tự động duyệt allow-once cho các lệnh đọc `go.mod`, kiểm tra git/file trong scope.
+- Coordinator bootstrap runtime, cấu hình `approvalMode=accept-edits` và `reasoningEffort=high` qua AO API (`reasoningEffort=high` được kiểm tra gián tiếp qua AO conversation settings trước khi Send thành công; `ao-session-readback.json` không chứa trường effort trực tiếp).
+- Tự động duyệt allow-once cho các lệnh đọc `go.mod`, kiểm tra git/file trong scope (tuy nhiên việc worker thực sự gọi tool đọc `go.mod` là NOT OBSERVED trong durable artifact hiện có).
 - Từ chối lệnh out-of-scope hoặc sửa ngoài file được phân công.
 - Không dùng allow-all, không dump environment chứa secrets.
 
@@ -101,6 +103,8 @@ Nguồn: AO daemon cô lập tại `127.0.0.1:3005`, CLIProxyAPI gateway tại `
 
 - **Trạng thái**: Phase 7E đạt `COMPLETE`. Toàn bộ Exit Criteria Phase 7 đã hoàn thành với accepted limitations.
 - **Giới hạn chấp nhận (Accepted Limitations)**:
+  - Việc worker thực sự gọi tool đọc `go.mod`: `NOT OBSERVED` trong durable artifact hiện có; không dùng receipt lặp lại artifact SHA từ prompt để chứng minh tool call (giới hạn này không hạ kết quả delivery/receipt/self-host LIVE).
+  - `ao-session-readback.json` không chứa trường effort trực tiếp (`reasoningEffort=high` được preflight kiểm tra gián tiếp qua AO conversation settings).
   - Provider outage / network partition tự phục hồi unattended: `NOT OBSERVED`.
   - Daemon restart crash giữa chừng và khôi phục lease: `NOT OBSERVED`.
   - User Stop LIVE: `NOT OBSERVED`.

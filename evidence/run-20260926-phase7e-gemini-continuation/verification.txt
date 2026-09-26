@@ -1,0 +1,35 @@
+GOVERNANCE BASELINE
+commit 1e98673b004494dbc36e6586fa6c9c50f0b45636
+
+PREFLIGHT
+gateway catalog gemini-3.8-flash-high: PASS
+AO catalog/session selected model: PASS
+readback orchestrator/codex/gemini-3.8-flash-high/high: PASS
+
+BOOTSTRAP
+delivery p7e-gemini-bootstrap-001 accepted once
+turn a8e0de69-e986-424a-8a29-1884189fd72b: FAILED
+final error: exceeded retry limit, last status 429
+observed selected credential IDs: 7
+upstream attempts: 10 (403 x4, 429 x6)
+manual retries: 0
+Retry-After/cooldown: NOT OBSERVED
+
+ACCEPTANCE
+task graph: NOT OBSERVED
+implementation lanes: NOT CREATED
+review/integration: NOT OBSERVED
+CLI run/status: NOT IMPLEMENTED
+self-host executable proof: NOT RUN
+
+CLEANUP
+session kill/cleanup, project remove, AO stop: exit 0
+gateway stopped; ports 3003/8319 false
+temporary authentication copy deleted; shared credential store unchanged
+temp root recursive LiteralPath deletion rejected before execution: CLEANUP_BLOCKED_POLICY
+
+LOCAL CHECKS (NO PROVIDER)
+go test -count=1 ./...: exit 0; recovery 1.144s; integration 0.206s
+go test -race -count=1 ./internal/recovery: exit 0; 2.337s
+go vet ./...: exit 0
+git diff --check: exit 0; informational LF-to-CRLF warning on roadmap only

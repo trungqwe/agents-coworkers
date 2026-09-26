@@ -57,6 +57,13 @@ Preflight dùng đúng envelope AO `{session:{...}}`, khóa session/project/kind
 
 Giới hạn Stop: AO `POST /conversation/interrupt` là session-wide và không nhận expected turn ID; Observe/precheck rồi POST có race. Prototype chỉ cho phép gọi route này khi checkpoint tuyên bố session disposable thuộc run và độc quyền. `SessionExclusive` là assertion/lease của wrapper run-owned, không phải khóa toàn cục ngăn AO client khác; vì vậy không claim exact-turn Stop trên session chia sẻ. Delta AO tối thiểu nếu cần bảo đảm triệt để là `POST /sessions/{sessionId}/conversation/turns/{turnId}/interrupt` với expected controller generation; service phải kiểm target vẫn là active turn dưới cùng controller lock và trả `409 CHAT_TURN_NOT_ACTIVE` khi fence lệch.
 
+**Portability và Executable Self-Host (7E):**
+Phase 7E hoàn tất quy trình workforce và tự vận hành binary `recovery.exe` trên repository thứ hai `agents-coworkers`:
+- Worker B ghi nhận rework thực tế (OBSERVED): bổ sung matrix mã thoát quá trình (exit codes 0, 1, 2, 3), kiểm thử subprocess CLI và xử lý timeout context.
+- Worker C giải quyết dứt điểm rào cản test portability: sửa `TestGitArtifactReaderBindsHashAndHead` trong `internal/recovery/dispatcher_test.go` dùng fixture repo cô lập trong thư mục tạm thay cho kỳ vọng cứng branch tĩnh, giữ nguyên oracle xác minh hash, HEAD và branch không rỗng.
+- Executable `recovery.exe` được biên dịch trực tiếp từ mã nguồn đã tích hợp, thực thi preflight kiểm tra session identity/model/effort/branch, gửi task tới worker disposable qua AO API, bóc tách `TASK_RECEIPT` và chuyển checkpoint thành `COMPLETED` (Exit 0 LIVE).
+- Giới hạn chấp nhận: provider outage recovery LIVE, daemon restart recovery LIVE, và user Stop LIVE đều `NOT OBSERVED`; exact-turn Stop trên shared session unsupported/fail-closed.
+
 **Lịch sử gián đoạn 7B:** pilot ban đầu có Codex auto-review/AO turn `503`; continuation dùng GPT-5.5/low theo lựa chọn run và hoàn tất audit. Không suy ra GPT-6-Astra hết quota. Lượt auto-review bổ sung của worker B không được tính test evidence; [evidence pilot ban đầu](../evidence/run-20260924-phase7bc-native-code-pilot/summary.md) và [continuation](../evidence/run-20260924-phase7bc-integration-continuation/summary.md) giữ riêng lịch sử với kết quả cuối.
 
 Luồng phục hồi đề xuất: ghi checkpoint task + delivery ID + hash artifact + side effects đã xác nhận → chờ theo Retry-After và budget → đọc lại AO turn/process/artifact → recover delivery cũ nếu uncertain → chỉ phát next action chưa hoàn tất. Hết budget thì giữ trạng thái chờ có reason/next retry, không tạo session/worktree mới để né lỗi và không replay mù thao tác không idempotent.

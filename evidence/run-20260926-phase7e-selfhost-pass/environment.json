@@ -1,0 +1,68 @@
+{
+  "run": {
+    "runId": "p7e-selfhost-20260926b",
+    "verdict": "PHASE_7E_PORTABILITY_SELFHOST_PASS",
+    "timestampUtc": "2026-09-26T08:27:00Z"
+  },
+  "runtime": {
+    "os": "windows-amd64",
+    "goVersion": "go1.25.0",
+    "gitVersion": "git version 2.47.1.windows.1",
+    "nodeVersion": "v22.14.0",
+    "pythonVersion": "Python 3.13.12"
+  },
+  "gateway": {
+    "host": "127.0.0.1",
+    "port": 8321,
+    "configSha256": "da5abd67227b050b267baa189cb348b5e08384a15d60365dbd151c300b2af0f9",
+    "authSource": "shared_read_only",
+    "selectedModel": "gemini-3.7-flash-high"
+  },
+  "ao": {
+    "host": "127.0.0.1",
+    "port": 3005,
+    "appRunId": "apprun-8a9ea3c710fef3f7",
+    "projectId": "p7e-continuation",
+    "sessions": {
+      "orchestrator": {
+        "id": "p7e-continuation-1",
+        "kind": "orchestrator",
+        "harness": "codex",
+        "model": "gemini-3.7-flash-high",
+        "reasoningEffort": "high",
+        "approvalMode": "accept-edits",
+        "branch": "ao/p7e-continuation-orchestrator"
+      },
+      "reworkWorker": {
+        "id": "p7e-continuation-2",
+        "kind": "worker",
+        "harness": "codex",
+        "model": "gemini-3.7-flash-high",
+        "reasoningEffort": "high",
+        "approvalMode": "accept-edits",
+        "branch": "ao/p7e-rework-worker"
+      },
+      "selfhostWorker": {
+        "id": "p7e-continuation-3",
+        "kind": "worker",
+        "harness": "codex",
+        "model": "gemini-3.7-flash-high",
+        "reasoningEffort": "high",
+        "approvalMode": "accept-edits",
+        "branch": "ao/p7e-selfhost-worker"
+      }
+    }
+  },
+  "git": {
+    "baselineCommit": "4dfbf9905ff12c363307e5974fab719a0911b114",
+    "combinedSourceCommit": "cfa5890f1a585f97743475c7d04014b031caa458",
+    "finalIntegrationCommit": "e80958331900b1fdd5e1190c0a75500bb1057157",
+    "reworkBranch": "ao/p7e-rework-worker",
+    "selfhostBranch": "ao/p7e-selfhost-worker"
+  },
+  "binary": {
+    "name": "recovery.exe",
+    "sha256": "8c069d69d06dc046f8d6bc81ac348700474a527b8d86aad53e981e133bac2ad7",
+    "sizeBytes": 9726976
+  }
+}

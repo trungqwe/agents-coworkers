@@ -1,0 +1,82 @@
+=== PHASE 7E INTEGRATION & SELF-HOST VERIFICATION SUITE ===
+Date: 2026-09-26T08:27:00Z
+Run ID: p7e-selfhost-20260926b
+Worktree: <RUN_TEMP>/ao-data/worktrees/p7e-continuation/p7e-continuation-2
+Branch: ao/p7e-rework-worker
+Commit: e80958331900b1fdd5e1190c0a75500bb1057157
+
+--- 1. FOCUSED TEST ---
+Command: go test -count=1 ./internal/recovery -run TestGitArtifactReaderBindsHashAndHead -v
+Exit Code: 0
+Output:
+=== RUN   TestGitArtifactReaderBindsHashAndHead
+--- PASS: TestGitArtifactReaderBindsHashAndHead (0.27s)
+PASS
+ok  	github.com/trungqwe/agents-coworkers/internal/recovery	0.763s
+
+--- 2. FULL TEST SUITE ---
+Command: go test -count=1 ./...
+Exit Code: 0
+Output:
+ok  	github.com/trungqwe/agents-coworkers/cmd/recovery	3.552s
+ok  	github.com/trungqwe/agents-coworkers/internal/recovery	1.764s
+ok  	github.com/trungqwe/agents-coworkers/tests/integration	0.210s
+
+--- 3. RACE DETECTION ---
+Command: go test -race -count=1 ./internal/recovery
+Exit Code: 0
+Output:
+ok  	github.com/trungqwe/agents-coworkers/internal/recovery	2.794s
+
+--- 4. STATIC ANALYSIS ---
+Command: go vet ./...
+Exit Code: 0
+Output: (clean, zero warnings)
+
+--- 5. BUILD EXECUTABLE ---
+Command: go build -o <RUN_TEMP>/recovery.exe ./cmd/recovery
+Exit Code: 0
+Binary Output: recovery.exe (9,726,976 bytes, SHA-256: 8c069d69d06dc046f8d6bc81ac348700474a527b8d86aad53e981e133bac2ad7)
+
+--- 6. GIT DIFF CHECK ---
+Command: git diff --check
+Exit Code: 0
+Output: (clean)
+
+--- 7. SCOPE AUDIT ---
+Command: git diff --stat 4dfbf99 e809583
+Exit Code: 0
+Output:
+ cmd/recovery/main.go                 | 195 ++++++++++++++++
+ cmd/recovery/main_test.go            | 355 +++++++++++++++++++++++++++++
+ internal/recovery/dispatcher_test.go |  68 +++++-
+ internal/recovery/runner.go          | 131 +++++++++++
+ internal/recovery/runner_test.go     | 422 +++++++++++++++++++++++++++++++++++
+ internal/recovery/status.go          | 187 ++++++++++++++++
+ internal/recovery/status_test.go     | 310 +++++++++++++++++++++++++
+ 7 files changed, 1661 insertions(+), 7 deletions(-)
+
+Single delta outside accepted A/B commits: internal/recovery/dispatcher_test.go only.
+
+--- 8. EXIT CODE MATRIX VERIFICATION ---
+- ExitCodeSuccess (0) [LIVE]:
+  - recovery status -checkpoint <RUN_TEMP>/checkpoint.json: exit 0, formatted status matches checkpoint.
+  - recovery run -checkpoint <RUN_TEMP>/checkpoint.json (completed task): exit 0, terminal state COMPLETED.
+- ExitCodeUsageError (1) [LOCAL_EXECUTABLE/SIMULATED]:
+  - recovery cancel: exit 1 ("error: cancel command is not supported via recovery CLI").
+- ExitCodeTerminalErr (2) [LOCAL_EXECUTABLE/SIMULATED]:
+  - recovery run -checkpoint <RUN_TEMP>/checkpoint_blocked.json: exit 2 ("error: recovery reached terminal state BLOCKED: ARTIFACT_CHANGED").
+- ExitCodeTimeout (3) [LOCAL_EXECUTABLE/SIMULATED]:
+  - recovery run -checkpoint <RUN_TEMP>/checkpoint.json -workspace <RUN_TEMP>/ao-data/worktrees/p7e-continuation/p7e-continuation-3 -ao-url http://127.0.0.1:3005 -poll 1s -timeout 90s: exit 3 ("error: recovery timed out before terminal state: context deadline exceeded"). Thực tế timeout: 90s, nguồn trạng thái: context deadline exceeded trên uncompleted turn; không báo 1ms.
+
+--- 9. LIVE SELF-HOST EXECUTION PROOF ---
+- Session ID: p7e-continuation-3 (kind: worker, harness: codex, model: gemini-3.7-flash-high, branch: ao/p7e-selfhost-worker)
+- Project ID: p7e-continuation
+- Task ID: P7E-SELFHOST-TASK-001
+- Delivery ID: p7e-selfhost-delivery-001
+- Preflight: Verified session exists, project ID, kind, harness, model, effort, branch, exclusive lock.
+- Initial State: WAITING_RETRY
+- Step 1: Preflight PASS, State -> DELIVERY_UNCERTAIN -> DELIVERED, Turn ID 5f8b27a5-d88e-4c1e-a373-5635c898d310
+- Execution: Codex session on Gemini 3.7 executed Get-Content go.mod, emitted exact receipt:
+  TASK_RECEIPT {"taskId":"P7E-SELFHOST-TASK-001","artifactSha256":"0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5","accepted":true}
+- Step 2: recovery.exe observed turn completion, parsed receipt, validated task ID and artifact SHA, transitioned checkpoint to COMPLETED, SideEffect COMPLETED. Exit code 0.

@@ -1,0 +1,13 @@
+diff --git a/docs/04-ROADMAP.md b/docs/04-ROADMAP.md
+index ed74a8d..705a528 100644
+--- a/docs/04-ROADMAP.md
++++ b/docs/04-ROADMAP.md
+@@ -106,6 +106,8 @@ Continuation Gemini high dừng `BLOCKED_PROFILE_POOL_UNAVAILABLE_GEMINI_3_8_FLA
+ 
+ Bounded resolution hiện `PROFILE_RESOLUTION_PARTIAL`: candidate `gemini-3.7-flash-high/high` là `GEMINI_3_7_DIRECT_PASS__AO_TOOL_LOOP_FAIL`. Direct PASS và AO failure được giữ tách biệt; 3.6 và 3.1-pro-low còn phải thử vì stop rule chỉ áp dụng khi AO tool-loop + receipt PASS. Xem [evidence](../evidence/run-20260926-phase7e-profile-resolution/summary.md). Phase 7E chưa dispatch workload.
+ 
++Continuation với gateway config đã hiệu chỉnh đạt AO tool-loop trên `gemini-3.7-flash-high/high` và đã dispatch workload self-host. Worker A và B có commit được orchestrator ACCEPT sau rework thật ở B; integration worker C cherry-pick sạch bốn commit nhưng `go test -count=1 ./...` FAIL do test 7D `TestGitArtifactReaderBindsHashAndHead` hardcode branch `phase7d-recovery-prototype`, không portable sang AO worktree. Trạng thái: `BLOCKED_AUTHORITY_TEST_PORTABILITY_DISPATCHER_TEST`; chưa có integration ACCEPT hoặc executable self-host proof. Không đổi branch đang checkout ở worktree khác để làm test xanh; cần duyệt amendment test giữ oracle ràng buộc branch nhưng dùng fixture/branch động. Xem [evidence continuation](../evidence/run-20260926-phase7e-integration-blocked/summary.md).
++
+ **Authority và trạng thái hiện hành:** [7A](../evidence/run-20260924-phase7a-native-pilot/summary.md) là review-only với profile GPT-6-Astra/low. Pilot 7B–7C trên AO fixture dùng GPT-5.5/low; review/integration/test được quan sát theo [continuation evidence](../evidence/run-20260924-phase7bc-integration-continuation/summary.md), không phát lại A/B. [7D live](../evidence/run-20260924-phase7d-wakeup-proof/summary.md) xác nhận session-level native resume/explicit wake; [prototype](../evidence/run-20260925-phase7d-recovery-prototype/summary.md) xác nhận logic checkpoint/recovery bằng test cô lập. Provider failure/daemon restart/unattended recovery live, rework thực tế và repo portability chưa được chứng minh. Phase 7 chưa COMPLETE; Product/CP2A giữ nguyên, P9/M3/Phân hệ A khóa.
+ 
+ **Checkpoint có ý nghĩa:** thay contract/scope; tích hợp thay đổi quan trọng; kết thúc capability proof; bàn giao. Debug/test/đọc trong gói authority đã cấp không đòi user duyệt lại từng lệnh. Nếu API vẫn phát approval, xử lý theo delegated scope và policy trong [06](06-OPERATIONS.md), không tắt cơ chế approval.

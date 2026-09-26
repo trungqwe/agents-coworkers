@@ -1,0 +1,13 @@
+Task ID:           P7E-SELFHOST-TASK-001
+Delivery ID:       p7e-selfhost-delivery-001
+Session ID:        p7e-continuation-3
+State:             COMPLETED
+Retryable:         false
+Terminal:          true
+Side Effect:       COMPLETED
+Attempts:          1/5
+Next Retry At:     none
+Last Observed UTC: 2026-09-26T08:27:00Z
+Last Error Kind:   none
+Git Head:          e80958331900b1fdd5e1190c0a75500bb1057157
+Artifact SHA256:   0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5

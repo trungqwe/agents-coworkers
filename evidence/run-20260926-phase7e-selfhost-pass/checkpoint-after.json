@@ -1,0 +1,14 @@
+{
+  "taskId": "P7E-SELFHOST-TASK-001",
+  "deliveryId": "p7e-selfhost-delivery-001",
+  "sessionId": "p7e-continuation-3",
+  "state": "COMPLETED",
+  "retryable": false,
+  "terminal": true,
+  "sideEffect": "COMPLETED",
+  "attempts": 1,
+  "retryBudget": 5,
+  "lastObservedUtc": "2026-09-26T08:27:00Z",
+  "gitHead": "e80958331900b1fdd5e1190c0a75500bb1057157",
+  "artifactSha256": "0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5"
+}

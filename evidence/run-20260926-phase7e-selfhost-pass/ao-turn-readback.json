@@ -1,0 +1,19 @@
+{
+  "turns": [
+    {
+      "id": "5f8b27a5-d88e-4c1e-a373-5635c898d310",
+      "state": "completed",
+      "status": null
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "text": "Read go.mod only. Do not modify files. Reply with exactly one final line: TASK_RECEIPT {\"taskId\":\"P7E-SELFHOST-TASK-001\",\"artifactSha256\":\"0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5\",\"accepted\":true}"
+    },
+    {
+      "role": "assistant",
+      "text": "TASK_RECEIPT {\"taskId\":\"P7E-SELFHOST-TASK-001\",\"artifactSha256\":\"0f96d491be3e33b707ac0e91e14a2355127a1a76b92f44cdf09d7168bbff9de5\",\"accepted\":true}"
+    }
+  ]
+}

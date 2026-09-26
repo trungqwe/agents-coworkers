@@ -93,14 +93,14 @@ CP1 browser UPSTREAM_PATH_RED chỉ chứng minh thiếu control sau prerequisit
 
 ---
 
-## 6. Canonical Gates for Phase 8 (Gates 8A–8E — Proposed / Not Authorized)
+## 6. Canonical Gates for Phase 8 (Gates 8A–8E)
 
 > [!IMPORTANT]
-> Toàn bộ các Gate 8A–8E dưới đây là quy chuẩn nghiệm thu được đề xuất cho Phase 8. Hiện tại **CHƯA ĐƯỢC CẤP QUYỀN THỰC THI (IMPLEMENTATION NOT AUTHORIZED)**. Khi bắt đầu từng slice, các gate này đóng vai trò là oracle bắt buộc để nghiệm thu trước khi chuyển giao.
+> Quy chuẩn nghiệm thu cho Phase 8. Gate 8A đã **VERIFIED — L4** (Slice 8A COMPLETE). Các Gate 8B–8E hiện tại **CHƯA ĐƯỢC CẤP QUYỀN THỰC THI (IMPLEMENTATION NOT AUTHORIZED)**; khi bắt đầu từng slice, các gate này đóng vai trò là oracle bắt buộc để nghiệm thu trước khi chuyển giao.
 
 | Gate | Tên Gate / Năng lực | Oracle nghiệm thu bắt buộc | Bằng chứng yêu cầu (Evidence Tier) | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
-| **Gate 8A** | Control Surface & Preflight CLI | Lệnh nhị phân CLI thực thi (`coworkers doctor`, `coworkers attach`, `coworkers status`) hoạt động chính xác; exit code chuẩn hóa; stderr/stdout không rò rỉ secret; `coworkers run` bị từ chối rõ ràng với mã thoát 1 | L4 (Local Process Smoke; unit tests L2 và integration giả lập L3 chỉ là bằng chứng bổ trợ; Gate 8A không gọi live provider) | **PROPOSED** |
+| **Gate 8A** | Control Surface & Preflight CLI | Lệnh nhị phân CLI thực thi (`coworkers doctor`, `coworkers attach`, `coworkers status`) hoạt động chính xác; exit code chuẩn hóa; stderr/stdout không rò rỉ secret; `coworkers run` bị từ chối rõ ràng với mã thoát 1 | L4 (Local Process Smoke; unit tests L2 và integration giả lập L3 chỉ là bằng chứng bổ trợ; Gate 8A không gọi live provider) | **VERIFIED — L4** |
 | **Gate 8B** | Autonomous Task Graph & Concurrency | Vòng lặp điều phối đa tác nhân (1–3 workers) tự phân rã task DAG, review diff, chỉ thị rework thật (dùng fixture cô lập seed sẵn lỗi cho state-machine test) và tích hợp commit vào local branch; không race condition | L7 (Multi-agent concurrent wave execution logs, checkpoint records, task review/rework transcripts, integration commit receipts) | **PROPOSED** |
 | **Gate 8C** | Routing Observability & Telemetry | Thu thập và xử lý downstream telemetry (`X-CPA-TRACE-ID`, `Retry-After`, status classification); nhận diện absent header là `NOT_OBSERVED`; phân loại lỗi không suy diễn chủ quan; không lộ secret | L5 (Redacted telemetry logs, trace correlation records, error classifier verification reports) | **PROPOSED** |
 | **Gate 8D** | Real Product Workload Isolation | Workforce tự vận hành trên dự án thật (`AI Auto Video Creator`); Product ROOT checkout giữ nguyên sạch (`INV-001`); worker ghi trên worktree cô lập; tích hợp dừng tại local integration branch, không push main | L7 (Worktree isolation verification, read-only root integrity proof, local integration branch diff/test results) | **PROPOSED** |
@@ -161,8 +161,8 @@ CP1 browser UPSTREAM_PATH_RED chỉ chứng minh thiếu control sau prerequisit
 - Nếu dữ liệu telemetry từ Slice 8C/8D chứng minh pool hiện tại đáp ứng tốt workload mà không cạn kiệt hạn ngạch: Gate 8E được nghiệm thu với trạng thái `NOT_TRIGGERED_WITH_EVIDENCE`, không cần thực hiện onboarding thêm tài khoản.
 - Việc đóng Phase 8 không phụ thuộc vào số lượng tài khoản trong kho inventory; chỉ số lượng tài khoản sử dụng được (usable capacity) dựa trên dữ liệu thực tế mới có giá trị.
 
-### Exact Authority Delta cho Implementation 8A (Chưa thực hiện)
-Nhằm chuẩn bị cho việc xin cấp quyền thực thi mã nguồn ở bước tiếp theo, phạm vi mã nguồn được giới hạn chính xác trong 17 tệp sau (tuyệt đối không dùng ký tự đại diện hay quy định tương đương):
+### Exact Authority Delta cho Implementation 8A (Đã hoàn thành — COMPLETE)
+Phạm vi mã nguồn của Slice 8A đã được triển khai chính xác trong 17 tệp sau (tuyệt đối không dùng ký tự đại diện hay quy định tương đương), đã được kiểm chứng và đóng Gate 8A ở cấp độ L4:
 - `cmd/coworkers/main.go`
 - `cmd/coworkers/main_test.go`
 - `internal/workforce/control/types.go`

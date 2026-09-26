@@ -16,7 +16,7 @@ Roadmap này là nguồn trạng thái duy nhất của sản phẩm workforce. 
 | **Phase 5** | AO Runtime Proof | **COMPLETE** | Gates 7, 8, 9 (Real Orchestrator, Real Worker, Rework Loop) |
 | **Phase 6** | 3-Worker Concurrency Proof | **COMPLETE** | Gate 10 (Real 3-Worker Concurrency Wave) |
 | **Phase 7** | Vòng workforce tự vận hành trên workload có giới hạn | **COMPLETE_WITH_ACCEPTED_LIMITATIONS** | 7A pilot; 7B/7C code-review-integration; 7D delivery recovery LIVE; 7E repo portability và executable self-host LIVE với Worker B rework OBSERVED; accepted limitations: provider outage LIVE, daemon restart LIVE, Stop LIVE đều NOT OBSERVED, exact-turn Stop trên shared session unsupported/fail-closed |
-| **Phase 8** | Lộ trình thương phẩm hóa workforce (8A–8E) | **DESIGN_PHASE — IMPLEMENTATION_NOT_AUTHORIZED** | Lộ trình 5 slice: 8A Control surface CLI & preflight, 8B Task graph & loop (1–3 workers), 8C Telemetry quan sát routing, 8D Workload trên dự án thật (read-only root), 8E Mở rộng dung lượng (conditional); implementation chưa được cấp quyền |
+| **Phase 8** | Lộ trình thương phẩm hóa workforce (8A–8E) | **ACTIVE_IMPLEMENTATION** | Slice 8A COMPLETE (Gate 8A VERIFIED — L4: cmd/coworkers doctor/attach/status; coworkers run UNSUPPORTED, exit 1). Slice 8B NEXT / IMPLEMENTATION_NOT_AUTHORIZED. Lộ trình 5 slice: 8A Control surface, 8B Task graph & loop (1–3 workers), 8C Telemetry quan sát routing, 8D Workload trên dự án thật (read-only root), 8E Mở rộng dung lượng (conditional); Phase 8 chưa COMPLETE, không tuyên bố production-ready |
 
 ---
 
@@ -116,10 +116,10 @@ Continuation tiếp theo đã hoàn tất sửa test portability bằng fixture 
 
 **Exit:** các oracle workflow ở [05](05-VERIFICATION.md) có evidence, giới hạn được công bố, đầu ra có code/test/review/integration và recovery. P8 UI hoặc sản xuất video hoàn tất không thuộc exit này.
 
-### Phase 8: Lộ trình thương phẩm hóa workforce (DESIGN_PHASE — IMPLEMENTATION_NOT_AUTHORIZED)
+### Phase 8: Lộ trình thương phẩm hóa workforce (ACTIVE_IMPLEMENTATION — Slice 8A COMPLETE / Slice 8B NEXT_NOT_AUTHORIZED)
 
 > [!IMPORTANT]
-> **Trạng thái phê duyệt**: Phase 8 hiện ở cấp độ **thiết kế kiến trúc và quy chuẩn governance (DOCS-ONLY)**. Mọi hoạt động viết mã nguồn (`cmd/coworkers`, `internal/workforce/...`), chạy runtime, gọi provider LLM, tạo AO session hoặc worktree Product đều **CHƯA ĐƯỢC CẤP QUYỀN (IMPLEMENTATION NOT AUTHORIZED)**.
+> **Trạng thái phê duyệt**: Phase 8 ở trạng thái **ACTIVE_IMPLEMENTATION**. Slice 8A đã hoàn thành và đóng Gate 8A ở cấp độ L4 (`cmd/coworkers` implemented cho doctor/attach/status; `coworkers run` vẫn UNSUPPORTED, exit 1). Slice 8B trở đi (`Slice 8B–8E`) **CHƯA ĐƯỢC CẤP QUYỀN TRIỂN KHAI (IMPLEMENTATION NOT AUTHORIZED)**. Phase 8 chưa COMPLETE và không tuyên bố production-ready.
 
 Mục tiêu của Phase 8 là hoàn thiện ranh giới sản phẩm của `agents-coworkers`: chuyển đổi từ tập hợp script/proof rời rạc sang một hệ thống workforce tự vận hành trên dự án thật, với một entrypoint CLI duy nhất, task graph bền vững, khả năng quan sát định tuyến dựa trên telemetry an toàn, và cô lập triệt để đối với mã nguồn sản phẩm. Lộ trình Phase 8 gồm 5 slice triển khai tuần tự:
 
@@ -213,8 +213,8 @@ Mục tiêu của Phase 8 là hoàn thiện ranh giới sản phẩm của `agen
 2. Slice 8E được đánh giá: hoàn tất nghiệm thu capacity proof HOẶC được xác nhận `NOT_TRIGGERED_WITH_EVIDENCE` dựa trên dữ liệu telemetry chứng minh pool hiện hữu đủ đáp ứng. Onboarding tài khoản mới không phải điều kiện tiên quyết bắt buộc.
 3. Không vi phạm bất biến kiến trúc: Product root checkout nguyên vẹn và sạch; không push trái phép lên Product main; không rò rỉ credential secret trong telemetry hay evidence.
 
-#### Exact Authority Delta cho Implementation 8A (Chưa thực hiện)
-Nhằm chuẩn bị cho lượt xin cấp quyền thực thi mã nguồn tiếp theo, phạm vi thay đổi mã nguồn dự kiến của Slice 8A được giới hạn chính xác trong 17 tệp sau (tuyệt đối không dùng ký tự đại diện hay quy định tương đương):
+#### Exact Authority Delta cho Implementation 8A (Đã hoàn thành — COMPLETE)
+Phạm vi mã nguồn của Slice 8A đã được triển khai chính xác trong 17 tệp sau (tuyệt đối không dùng ký tự đại diện hay quy định tương đương), đã được kiểm chứng và đóng Gate 8A ở cấp độ L4:
 - `cmd/coworkers/main.go`
 - `cmd/coworkers/main_test.go`
 - `internal/workforce/control/types.go`

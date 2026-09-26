@@ -1,0 +1,103 @@
+=== PHASE 8A CONTROL SURFACE VERIFICATION SUITE ===
+Date: 2026-09-26T15:05:00Z
+Run ID: run-20260926-phase8a-control-surface
+Baseline Commit: 3d99486d9bfc53513517259f607cb978ed7f0925
+Implementation Commit: 8c8948a41a11065cbfe9f7b2d2549c7f43b6e65b
+Worktree: D:\TU_CODE\agents-coworkers-phase8a-control
+Branch: phase8a-control-surface
+Go Version: go version go1.26.0 windows/amd64
+Git Version: git version 2.55.0.windows.5
+
+--- 1. GOFMT CHECK ---
+Command: gofmt -s -l cmd/coworkers internal/workforce/control internal/recovery/lease.go internal/recovery/lease_test.go
+Exit Code: 0
+Output: (clean, 0 formatted deviations)
+
+--- 2. GIT DIFF CHECK ---
+Command: git diff --cached --check
+Exit Code: 0
+Output: (clean, 0 whitespace or formatting errors)
+
+--- 3. GO VET ---
+Command: go vet ./...
+Exit Code: 0
+Output: (clean, 0 vet issues)
+
+--- 4. FULL TEST SUITE ---
+Command: go test -count=1 ./...
+Exit Code: 0
+Output:
+ok  	github.com/trungqwe/agents-coworkers/cmd/coworkers	3.255s
+ok  	github.com/trungqwe/agents-coworkers/cmd/recovery	3.533s
+ok  	github.com/trungqwe/agents-coworkers/internal/recovery	1.837s
+ok  	github.com/trungqwe/agents-coworkers/internal/workforce/control	6.296s
+ok  	github.com/trungqwe/agents-coworkers/tests/integration	0.208s
+
+--- 5. RACE DETECTOR ---
+Command: go test -race -count=1 ./...
+Exit Code: 0
+Output:
+ok  	github.com/trungqwe/agents-coworkers/cmd/coworkers	4.736s
+ok  	github.com/trungqwe/agents-coworkers/cmd/recovery	4.765s
+ok  	github.com/trungqwe/agents-coworkers/internal/recovery	3.307s
+ok  	github.com/trungqwe/agents-coworkers/internal/workforce/control	8.098s
+ok  	github.com/trungqwe/agents-coworkers/tests/integration	1.138s
+
+--- 6. L4 PROCESS ORACLE SUITE (25 SUBTESTS / 26 SUBPROCESSES) ---
+Command: go test -v -count=1 -run TestL4_DurableProcessOracle ./cmd/coworkers
+Exit Code: 0
+Output:
+=== RUN   TestL4_DurableProcessOracle
+=== RUN   TestL4_DurableProcessOracle/01_doctor_healthy
+=== RUN   TestL4_DurableProcessOracle/02_attach_initial_create
+=== RUN   TestL4_DurableProcessOracle/03_attach_idempotent_second_call
+=== RUN   TestL4_DurableProcessOracle/04_status_valid_manifest
+=== RUN   TestL4_DurableProcessOracle/05_run_unsupported
+=== RUN   TestL4_DurableProcessOracle/06_doctor_without_spec
+=== RUN   TestL4_DurableProcessOracle/07_doctor_with_manifest_flag
+=== RUN   TestL4_DurableProcessOracle/08_attach_missing_args
+=== RUN   TestL4_DurableProcessOracle/09_status_missing_file
+=== RUN   TestL4_DurableProcessOracle/10_doctor_invalid_spec_unknown_fields
+=== RUN   TestL4_DurableProcessOracle/11_attach_invalid_binding_branch_mismatch
+=== RUN   TestL4_DurableProcessOracle/12_attach_invalid_lease_locked
+=== RUN   TestL4_DurableProcessOracle/13_doctor_gateway_auth_error_401
+=== RUN   TestL4_DurableProcessOracle/14_doctor_closed_ao_port
+=== RUN   TestL4_DurableProcessOracle/15_doctor_model_missing_from_catalog
+=== RUN   TestL4_DurableProcessOracle/16_attach_conversation_missing_effort
+=== RUN   TestL4_DurableProcessOracle/17_attach_profile_effort_mismatch
+=== RUN   TestL4_DurableProcessOracle/18_status_gateway_override_mismatch
+=== RUN   TestL4_DurableProcessOracle/19_status_trailing_json_manifest
+=== RUN   TestL4_DurableProcessOracle/20_doctor_candidate_deduplication
+=== RUN   TestL4_DurableProcessOracle/21_doctor_candidate_invalid_exists
+=== RUN   TestL4_DurableProcessOracle/22_doctor_two_different_daemons_fail
+=== RUN   TestL4_DurableProcessOracle/23_attach_idempotent_when_same_run_lease_owned
+=== RUN   TestL4_DurableProcessOracle/24_doctor_and_attach_fail_when_product_root_has_agents_coworkers_file
+=== RUN   TestL4_DurableProcessOracle/25_attach_fails_when_execution_workspace_has_unexpected_file
+--- PASS: TestL4_DurableProcessOracle (2.60s)
+    --- PASS: TestL4_DurableProcessOracle/01_doctor_healthy (0.33s)
+    --- PASS: TestL4_DurableProcessOracle/02_attach_initial_create (0.14s)
+    --- PASS: TestL4_DurableProcessOracle/03_attach_idempotent_second_call (0.14s)
+    --- PASS: TestL4_DurableProcessOracle/04_status_valid_manifest (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/05_run_unsupported (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/06_doctor_without_spec (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/07_doctor_with_manifest_flag (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/08_attach_missing_args (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/09_status_missing_file (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/10_doctor_invalid_spec_unknown_fields (0.02s)
+    --- PASS: TestL4_DurableProcessOracle/11_attach_invalid_binding_branch_mismatch (0.10s)
+    --- PASS: TestL4_DurableProcessOracle/12_attach_invalid_lease_locked (0.13s)
+    --- PASS: TestL4_DurableProcessOracle/13_doctor_gateway_auth_error_401 (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/14_doctor_closed_ao_port (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/15_doctor_model_missing_from_catalog (0.09s)
+    --- PASS: TestL4_DurableProcessOracle/16_attach_conversation_missing_effort (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/17_attach_profile_effort_mismatch (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/18_status_gateway_override_mismatch (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/19_status_trailing_json_manifest (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/20_doctor_candidate_deduplication (0.09s)
+    --- PASS: TestL4_DurableProcessOracle/21_doctor_candidate_invalid_exists (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/22_doctor_two_different_daemons_fail (0.01s)
+    --- PASS: TestL4_DurableProcessOracle/23_attach_idempotent_when_same_run_lease_owned (0.13s)
+    --- PASS: TestL4_DurableProcessOracle/24_doctor_and_attach_fail_when_product_root_has_agents_coworkers_file (0.13s)
+    --- PASS: TestL4_DurableProcessOracle/25_attach_fails_when_execution_workspace_has_unexpected_file (0.12s)
+PASS
+ok  	github.com/trungqwe/agents-coworkers/cmd/coworkers	3.069s

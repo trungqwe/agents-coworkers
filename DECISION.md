@@ -7,7 +7,7 @@
 - **Selected Candidate**: **Candidate A** (Unified Codex Client Harness via CLIProxyAPI Gateway)
 - **Architectural Status**: `SOURCE-FEASIBLE`
 - **Runtime Decision**: `ACCEPTED` (All 10 Canonical Verification Gates verified at runtime; initial target of 3 live concurrent workers proven)
-- **Active Roadmap Phase**: **Phase 8 — Productization Roadmap & Design Governance (DESIGN_PHASE / IMPLEMENTATION_NOT_AUTHORIZED)**; Phase 7 đạt **COMPLETE_WITH_ACCEPTED_LIMITATIONS** (trạng thái authoritative tại [docs/04-ROADMAP.md](docs/04-ROADMAP.md)).
+- **Active Roadmap Phase**: **Phase 8 — Productization Roadmap & Design Governance (ACTIVE_IMPLEMENTATION)**; Slice 8A đạt **COMPLETE** (Gate 8A: **VERIFIED — L4**); `cmd/coworkers` IMPLEMENTED cho doctor/attach/status (`coworkers run` vẫn UNSUPPORTED, exit 1); Slice 8B: **NEXT / IMPLEMENTATION_NOT_AUTHORIZED**; Phase 8 chưa COMPLETE, không tuyên bố production-ready; Phase 7 đạt **COMPLETE_WITH_ACCEPTED_LIMITATIONS** (trạng thái authoritative tại [docs/04-ROADMAP.md](docs/04-ROADMAP.md)).
 
 ---
 

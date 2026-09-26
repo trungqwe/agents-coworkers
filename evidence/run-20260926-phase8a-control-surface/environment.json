@@ -1,0 +1,60 @@
+{
+  "run": {
+    "runId": "run-20260926-phase8a-control-surface",
+    "gate": "GATE_8A",
+    "gateStatus": "VERIFIED_L4",
+    "slice": "SLICE_8A_COMPLETE",
+    "phase": "PHASE_8_ACTIVE_IMPLEMENTATION",
+    "slice8bStatus": "NEXT_IMPLEMENTATION_NOT_AUTHORIZED",
+    "timestampUtc": "2026-09-26T15:05:00Z"
+  },
+  "runtime": {
+    "os": "windows-amd64",
+    "goVersion": "go version go1.26.0 windows/amd64",
+    "gitVersion": "git version 2.55.0.windows.5"
+  },
+  "git": {
+    "baselineCommit": "3d99486d9bfc53513517259f607cb978ed7f0925",
+    "implementationCommit": "8c8948a41a11065cbfe9f7b2d2549c7f43b6e65b",
+    "branch": "phase8a-control-surface",
+    "worktree": "D:\\TU_CODE\\agents-coworkers-phase8a-control"
+  },
+  "contract": {
+    "productRootPorcelainCheck": "git status --porcelain=v1 -z (no exceptions)",
+    "executionWorkspacePorcelainCheck": "git status --porcelain=v1 -uall -z (filters strictly ?? .agents-coworkers/recovery-leases/<sha256(runId + \"\\n__run__\")>.lease)",
+    "porcelainSha256": "SHA-256 of canonical filtered source-porcelain",
+    "providerCallPerformed": false,
+    "credentialEligibility": "NOT_OBSERVED",
+    "capacityClaim": "NONE"
+  },
+  "exitCodes": {
+    "success": 0,
+    "unsupportedRun": 1,
+    "validationConflict": 2,
+    "endpointUnavailable": 3
+  },
+  "implementationFiles": [
+    "cmd/coworkers/main.go",
+    "cmd/coworkers/main_test.go",
+    "docs/02-ARCHITECTURE.md",
+    "docs/03-DECISIONS.md",
+    "docs/04-ROADMAP.md",
+    "docs/05-VERIFICATION.md",
+    "docs/06-OPERATIONS.md",
+    "internal/recovery/lease.go",
+    "internal/recovery/lease_test.go",
+    "internal/workforce/control/attach.go",
+    "internal/workforce/control/attach_test.go",
+    "internal/workforce/control/discovery.go",
+    "internal/workforce/control/discovery_test.go",
+    "internal/workforce/control/doctor.go",
+    "internal/workforce/control/doctor_test.go",
+    "internal/workforce/control/manifest.go",
+    "internal/workforce/control/manifest_test.go",
+    "internal/workforce/control/run_spec.go",
+    "internal/workforce/control/run_spec_test.go",
+    "internal/workforce/control/status.go",
+    "internal/workforce/control/status_test.go",
+    "internal/workforce/control/types.go"
+  ]
+}

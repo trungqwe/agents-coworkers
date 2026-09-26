@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > **Authoritative Decision Ledger**: This document is the single source of truth for architectural decisions in the `agents-coworkers` repository.
-> Active Roadmap Phase: **Phase 8 — Productization Roadmap & Design Governance (DESIGN_PHASE / IMPLEMENTATION_NOT_AUTHORIZED)**; Phase 7 is **COMPLETE_WITH_ACCEPTED_LIMITATIONS** (authoritative status tracked in [04-ROADMAP.md](04-ROADMAP.md)).
+> Active Roadmap Phase: **Phase 8 — Productization Roadmap & Design Governance (ACTIVE_IMPLEMENTATION)**; Slice 8A is **COMPLETE** (Gate 8A: **VERIFIED — L4**; `cmd/coworkers` implemented for doctor/attach/status, `coworkers run` UNSUPPORTED exit 1); Slice 8B is **NEXT / IMPLEMENTATION_NOT_AUTHORIZED**; Phase 8 is not COMPLETE and does not claim production readiness; Phase 7 is **COMPLETE_WITH_ACCEPTED_LIMITATIONS** (authoritative status tracked in [04-ROADMAP.md](04-ROADMAP.md)).
 
 ### Decision Status
 - `PROVISIONAL`: Accepted for exploration, subject to verification gates.
@@ -104,7 +104,7 @@
 - **Evidence Maturity**: `LIVE_RUNTIME` cho subset request đã quan sát; phần còn lại `NOT_OBSERVED`.
 - **Decision**: Phân biệt số credential đăng ký, đã nạp, đủ điều kiện, được chọn và request thành công theo provider/model. Inventory hoặc catalog không chứng minh phân phối quota; `X-CPA-TRACE-ID` chỉ chứng minh credential được chọn cho request đã quan sát. Khi session affinity bật, không đòi round-robin ở từng request. Không suy quota còn lại từ token usage.
 - **Evidence**: `evidence/run-20260923-phase8-pool-onboarding/`: 1 Codex + 7 Gemini danh tính riêng đã đăng ký; 14 request fixture tuần tự tới `gemini-3.8-flash-high/high` trả 200, 5 credential ẩn danh được chọn. Các test fake executor/selector là `SOURCE/UNIT`, không phải `LIVE_FAILOVER`; bốn lỗi 429 cũ vẫn `UNKNOWN`.
-- **Giới hạn**: Binary gateway tự báo `dev/none/unknown`; SHA-256 binary và source SHA được lưu nhưng chưa chứng minh binary-build correspondence. Gemini chưa được chọn, Codex pool routing, quota còn lại và live failover chưa được chứng minh. Concurrency proven vẫn là 3; Phase 8 đang ở `DESIGN_PHASE / IMPLEMENTATION_NOT_AUTHORIZED`.
+- **Giới hạn**: Binary gateway tự báo `dev/none/unknown`; SHA-256 binary và source SHA được lưu nhưng chưa chứng minh binary-build correspondence. Gemini chưa được chọn, Codex pool routing, quota còn lại và live failover chưa được chứng minh. Concurrency proven vẫn là 3; Phase 8 đang ở `ACTIVE_IMPLEMENTATION` (Slice 8A COMPLETE; Slice 8B NEXT / IMPLEMENTATION_NOT_AUTHORIZED; Phase 8 chưa COMPLETE).
 - **Revisit Trigger**: Dữ liệu telemetry thực tế từ Slice 8C/8D chứng minh quota cạn kiệt hoặc hành vi routing mới.
 
 ### D012 — Workforce là sản phẩm; AI Video Creator là workload mẫu
@@ -126,8 +126,8 @@
 - **Revisit Trigger**: AO introduces an authoritative policy layer that explicitly binds roles to models and the user adopts that policy.
 
 ### D014 — Target Product Entrypoint CLI (coworkers)
-- **Decision Status**: `PROVISIONAL` (Phase 8 Design Proposal — Implementation Not Authorized)
-- **Evidence Maturity**: `STATIC`
+- **Decision Status**: `ACCEPTED` (Slice 8A control surface implemented and verified at Gate 8A; Slice 8B execution loop remains NEXT / IMPLEMENTATION_NOT_AUTHORIZED)
+- **Evidence Maturity**: `L4_PROCESS_SMOKE`
 - **Decision**:
   1. The target product operational user entrypoint is named `coworkers`.
   2. `coworkers` is architected as a thin control-plane CLI that talks to AO backend and CLIProxyAPI exclusively via loopback HTTP REST APIs.

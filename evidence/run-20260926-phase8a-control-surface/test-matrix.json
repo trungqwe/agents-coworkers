@@ -1,0 +1,234 @@
+{
+  "suite": "TestL4_DurableProcessOracle",
+  "package": "github.com/trungqwe/agents-coworkers/cmd/coworkers",
+  "subtestsCount": 25,
+  "subprocessesCount": 26,
+  "verdict": "PASS",
+  "subtests": [
+    {
+      "id": "01",
+      "name": "01_doctor_healthy",
+      "subprocesses": 1,
+      "expectedExit": 0,
+      "actualExit": 0,
+      "verdict": "PASS",
+      "description": "Doctor reports healthy environment, required git tool, reachable loopback AO, and catalog verified"
+    },
+    {
+      "id": "02",
+      "name": "02_attach_initial_create",
+      "subprocesses": 1,
+      "expectedExit": 0,
+      "actualExit": 0,
+      "verdict": "PASS",
+      "description": "Attach binds to session and creates RunManifest atomically with FREE lease state"
+    },
+    {
+      "id": "03",
+      "name": "03_attach_idempotent_second_call",
+      "subprocesses": 1,
+      "expectedExit": 0,
+      "actualExit": 0,
+      "verdict": "PASS",
+      "description": "Attach returns idempotent success when called second time with identical manifest and bindings"
+    },
+    {
+      "id": "04",
+      "name": "04_status_valid_manifest",
+      "subprocesses": 1,
+      "expectedExit": 0,
+      "actualExit": 0,
+      "verdict": "PASS",
+      "description": "Status reports live re-inspected lease and valid manifest metadata without modifying state"
+    },
+    {
+      "id": "05",
+      "name": "05_run_unsupported",
+      "subprocesses": 1,
+      "expectedExit": 1,
+      "actualExit": 1,
+      "verdict": "PASS",
+      "description": "Coworkers run exits 1 with unsupported command error"
+    },
+    {
+      "id": "06",
+      "name": "06_doctor_without_spec",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Doctor requires --spec flag; missing flag exits 2"
+    },
+    {
+      "id": "07",
+      "name": "07_doctor_with_manifest_flag",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Doctor rejects --manifest flag; exits 2"
+    },
+    {
+      "id": "08",
+      "name": "08_attach_missing_args",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Attach requires --session, --workspace, and --manifest; missing arguments exit 2"
+    },
+    {
+      "id": "09",
+      "name": "09_status_missing_file",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Status with nonexistent manifest file exits 2"
+    },
+    {
+      "id": "10",
+      "name": "10_doctor_invalid_spec_unknown_fields",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Doctor fail-closed on RunSpec with unknown fields; exits 2"
+    },
+    {
+      "id": "11",
+      "name": "11_attach_invalid_binding_branch_mismatch",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Attach fails when worktree branch does not match session branch; exits 2"
+    },
+    {
+      "id": "12",
+      "name": "12_attach_invalid_lease_locked",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Attach fails when run lease is held by another owner (LOCKED); exits 2"
+    },
+    {
+      "id": "13",
+      "name": "13_doctor_gateway_auth_error_401",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Doctor fails on gateway 401 Unauthorized with CLIPROXY_KEY; exits 2"
+    },
+    {
+      "id": "14",
+      "name": "14_doctor_closed_ao_port",
+      "subprocesses": 1,
+      "expectedExit": 3,
+      "actualExit": 3,
+      "verdict": "PASS",
+      "description": "Doctor fails on unreachable loopback AO daemon; exits 3"
+    },
+    {
+      "id": "15",
+      "name": "15_doctor_model_missing_from_catalog",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Doctor fails when required profile model is absent from gateway /v1/models catalog; exits 2"
+    },
+    {
+      "id": "16",
+      "name": "16_attach_conversation_missing_effort",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Attach fails when conversation is missing reasoning_effort; exits 2"
+    },
+    {
+      "id": "17",
+      "name": "17_attach_profile_effort_mismatch",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Attach fails when session reasoning_effort does not match RunSpec profile; exits 2"
+    },
+    {
+      "id": "18",
+      "name": "18_status_gateway_override_mismatch",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Status fails when explicit gateway URL conflicts with manifest gateway URL; exits 2"
+    },
+    {
+      "id": "19",
+      "name": "19_status_trailing_json_manifest",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Status fails-closed on corrupt manifest with trailing non-whitespace characters; exits 2"
+    },
+    {
+      "id": "20",
+      "name": "20_doctor_candidate_deduplication",
+      "subprocesses": 1,
+      "expectedExit": 0,
+      "actualExit": 0,
+      "verdict": "PASS",
+      "description": "Doctor successfully deduplicates multiple candidate running.json pointing to same live PID and port"
+    },
+    {
+      "id": "21",
+      "name": "21_doctor_candidate_invalid_exists",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Doctor fails-closed when candidate running.json contains invalid JSON; exits 2"
+    },
+    {
+      "id": "22",
+      "name": "22_doctor_two_different_daemons_fail",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Doctor fails-closed without auto-selecting when multiple different live running.json daemons exist; exits 2"
+    },
+    {
+      "id": "23",
+      "name": "23_attach_idempotent_when_same_run_lease_owned",
+      "subprocesses": 1,
+      "expectedExit": 0,
+      "actualExit": 0,
+      "verdict": "PASS",
+      "description": "Attach succeeds idempotently when lease transitions from FREE to OWNED by the same run owner"
+    },
+    {
+      "id": "24",
+      "name": "24_doctor_and_attach_fail_when_product_root_has_agents_coworkers_file",
+      "subprocesses": 2,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Both doctor and attach fail-closed (2 separate subprocess invocations) when Product root has untracked file under .agents-coworkers/**; exits 2"
+    },
+    {
+      "id": "25",
+      "name": "25_attach_fails_when_execution_workspace_has_unexpected_file",
+      "subprocesses": 1,
+      "expectedExit": 2,
+      "actualExit": 2,
+      "verdict": "PASS",
+      "description": "Attach fails-closed when execution workspace has unexpected untracked file under .agents-coworkers/**; exits 2"
+    }
+  ]
+}

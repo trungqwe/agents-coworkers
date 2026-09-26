@@ -2,9 +2,13 @@ package recovery
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -614,16 +618,66 @@ func TestCancelWinsSerializedRaceAndStepCannotSend(t *testing.T) {
 }
 
 func TestGitArtifactReaderBindsHashAndHead(t *testing.T) {
-	root, err := filepath.Abs(filepath.Join("..", ".."))
+	repoDir := t.TempDir()
+
+	const fixtureBranch = "fixture-test-branch"
+	runGit := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", append([]string{"-C", repoDir}, args...)...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v failed: %v, output: %s", args, err, string(out))
+		}
+	}
+
+	runGit("init")
+	runGit("config", "user.name", "Test User")
+	runGit("config", "user.email", "test@example.com")
+	runGit("checkout", "-b", fixtureBranch)
+
+	artifactName := "artifact.txt"
+	artifactContent := []byte("deterministic artifact content for recovery test\n")
+	artifactPath := filepath.Join(repoDir, artifactName)
+	if err := os.WriteFile(artifactPath, artifactContent, 0o600); err != nil {
+		t.Fatalf("write artifact: %v", err)
+	}
+	runGit("add", artifactName)
+	runGit("commit", "-m", "commit artifact fixture")
+
+	h := sha256.Sum256(artifactContent)
+	expectedSHA := fmt.Sprintf("%x", h)
+
+	headOut, err := exec.Command("git", "-C", repoDir, "rev-parse", "HEAD").Output()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("read expected git head: %v", err)
 	}
-	reader := GitArtifactReader{Root: root}
-	got, err := reader.Observe(context.Background(), "go.mod")
-	if err != nil || got.SHA256 == "" || got.GitHead == "" || got.Branch != "phase7d-recovery-prototype" {
-		t.Fatalf("got=%+v err=%v", got, err)
+	expectedHead := strings.TrimSpace(string(headOut))
+
+	branchOut, err := exec.Command("git", "-C", repoDir, "branch", "--show-current").Output()
+	if err != nil {
+		t.Fatalf("read expected git branch: %v", err)
 	}
-	outside := filepath.Join(filepath.Dir(root), filepath.Base(root)+"-outside.txt")
+	expectedBranch := strings.TrimSpace(string(branchOut))
+	if expectedBranch != fixtureBranch || expectedBranch == "" {
+		t.Fatalf("expected branch mismatch: got %q, want %q", expectedBranch, fixtureBranch)
+	}
+
+	reader := GitArtifactReader{Root: repoDir}
+	got, err := reader.Observe(context.Background(), artifactName)
+	if err != nil {
+		t.Fatalf("observe failed: %v", err)
+	}
+
+	if got.SHA256 != expectedSHA {
+		t.Fatalf("SHA256 mismatch: got %s, want %s", got.SHA256, expectedSHA)
+	}
+	if got.GitHead != expectedHead {
+		t.Fatalf("GitHead mismatch: got %s, want %s", got.GitHead, expectedHead)
+	}
+	if got.Branch == "" || got.Branch != expectedBranch {
+		t.Fatalf("Branch mismatch: got %q, want non-empty %q", got.Branch, expectedBranch)
+	}
+
+	outside := filepath.Join(filepath.Dir(repoDir), filepath.Base(repoDir)+"-outside.txt")
 	if err := os.WriteFile(outside, []byte("outside"), 0o600); err != nil {
 		t.Fatal(err)
 	}

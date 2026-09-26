@@ -233,3 +233,283 @@ Dừng tại acceptance/audit đã giao; cleanup đúng owner, báo phần còn 
   - Mã thoát chuẩn hóa: `0` (thành công / trạng thái terminal `COMPLETED`), `1` (lỗi sử dụng CLI, ví dụ lệnh cancel không được hỗ trợ qua CLI), `2` (lỗi terminal, ví dụ `BLOCKED: ARTIFACT_CHANGED`), `3` (hết hạn timeout context trước khi đạt trạng thái terminal).
   - Khả năng di chuyển (portability) và self-host LIVE đã được xác nhận tại Phase 7E ([evidence](../evidence/run-20260926-phase7e-selfhost-pass/summary.md)). Giữ nguyên các giới hạn bất biến: provider outage tự phục hồi LIVE, daemon restart recovery LIVE, và Stop LIVE đều `NOT OBSERVED`; exact-turn Stop trên shared session là unsupported và fail-closed.
 - Không mô tả `/conversation/interrupt` là exact-turn primitive: route hiện session-wide, không có expected turn/controller fence và precheck có race. Chỉ dùng trong session disposable, run-owned, độc quyền; nếu không chứng minh được exclusivity thì fail-closed. `SessionExclusive` chỉ là assertion/lease của wrapper, không khóa được AO client khác. `completed` phải kiểm receipt và giữ `COMPLETED`; thiếu receipt giữ outcome unverified; `failed` là `DELIVERY_FAILED`; chỉ observed `interrupted/cancelled` mới xác nhận `CANCELLED`.
+
+---
+
+## 8. Phase 8 Proposed Control Surface (Draft Design / Implementation Not Authorized)
+
+> [!IMPORTANT]
+> Toàn bộ nội dung trong mục này là tài liệu thiết kế và quy chuẩn vận hành dự kiến cho Phase 8 (`cmd/coworkers`). Hiện tại **CHƯA ĐƯỢC CẤP QUYỀN THỰC THI (IMPLEMENTATION NOT AUTHORIZED)**. Khi vận hành thực tế ở thời điểm hiện tại, kỹ sư tiếp tục sử dụng runbook tại các Mục 0–7 và công cụ `recovery.exe` (`cmd/recovery`).
+
+### 8.1. Entrypoint điều khiển dòng lệnh: `coworkers` (PROPOSED)
+
+CLI `coworkers` được thiết kế như một thin client giao tiếp qua loopback HTTP REST với Agent Orchestrator daemon và CLIProxyAPI gateway.
+
+#### Thứ tự phân giải Endpoint & Xác thực (Endpoint Discovery & Gateway Auth):
+Hệ thống xác định endpoint của Agent Orchestrator theo thứ tự ưu tiên nghiêm ngặt (nguyên tắc fail-closed):
+1. Cờ lệnh tường minh: `--ao-url <URL>` (bắt buộc host loopback `localhost`, `127.0.0.1`, hoặc `::1`; nếu truyền URL không hợp lệ hoặc không phải loopback thì fail-closed ngay lập tức, không fallback; xác minh `GET /api/v1/identity`; không dùng OS port inspection để suy PID; ghi nhận `aoDiscoverySource: "explicit_url"`, `aoPid: 0`, `aoPidStatus: "NOT_OBSERVED"`);
+2. Biến môi trường: `AO_BASE_URL` (bắt buộc host loopback; nếu tồn tại nhưng không hợp lệ hoặc không phải loopback thì fail-closed, không fallback; xác minh `GET /api/v1/identity`; ghi nhận `aoDiscoverySource: "environment_url"`, `aoPid: 0`, `aoPidStatus: "NOT_OBSERVED"`);
+3. Biến môi trường: `AO_RUN_FILE` (đường dẫn tệp run metadata, ví dụ `running.json`, không phải URL; parse `running.json`, kiểm tra PID > 0 và tiến trình còn sống, tạo loopback URL từ port, xác minh `GET /api/v1/identity`; ghi nhận `aoDiscoverySource: "run_file"`, `aoPid`, `aoPidStatus: "VERIFIED"`);
+4. Các tệp candidate mặc định: `~/.ao/dev/running.json`, `~/.ao/running.json` (chỉ quét khi không có cả ba nguồn ưu tiên trên; quy tắc xác minh tương tự `AO_RUN_FILE`);
+5. Quy tắc PID: `/api/v1/identity` chỉ trả `hostId` và `apiVersion` (hoặc `contractVersion`), không trả PID. Chỉ có `running.json` mới chứa PID. Do đó, chỉ ghi nhận `aoPidStatus: "VERIFIED"` khi endpoint đến từ `running.json`. Tuyệt đối không suy PID bằng OS port inspection khi URL được cấp trực tiếp;
+6. Nếu quét các candidate mặc định mà phát hiện nhiều hơn một daemon hợp lệ đang chạy thì **dừng lại ngay lập tức (fail-closed, exit 2)** và yêu cầu người dùng chỉ định rõ endpoint qua `--ao-url`. Nếu không tìm thấy daemon hợp lệ nào: exit 3. Cổng 3005 không phải là cổng kiến trúc cố định. Nếu endpoint hợp lệ nhưng không kết nối được hoặc timeout: exit 3. Nếu sai lệch parse/schema/identity/PID: exit 2.
+
+Cổng của gateway CLIProxyAPI được phân giải theo thứ tự:
+1. Cờ lệnh tường minh: `--gateway-url <URL>` (nếu không hợp lệ thì fail-closed, không fallback);
+2. Biến môi trường: `COWORKERS_GATEWAY_URL` (nếu không hợp lệ thì fail-closed, không fallback);
+3. Giá trị mặc định lịch sử: `http://127.0.0.1:8317`.
+
+Xác thực Gateway: Thăm dò catalog gateway sử dụng `GET /v1/models`. Khi endpoint yêu cầu xác thực, khóa gateway được lấy từ biến môi trường `CLIPROXY_KEY` trong process environment. Tuyệt đối không đưa khóa vào RunSpec, RunManifest, argv, stdout, stderr hoặc evidence; không ghi raw Authorization header; thiếu credential bắt buộc hoặc 401/403: exit 2; không kết nối được hoặc timeout: exit 3; gateway trả catalog/JSON không hợp lệ: exit 2.
+
+#### Các lệnh con và quy chuẩn vận hành trong Slice 8A:
+
+1. **Khám sức khỏe môi trường và hạ tầng (`coworkers doctor`)**:
+   ```bash
+   coworkers doctor --spec <run-spec.json> [--ao-url <url>] [--gateway-url <url>] [--json]
+   ```
+   - **Cờ `--spec` là bắt buộc**: Nếu thiếu, tệp hỏng hoặc sai schema `RunSpec`, lệnh lập tức thoát với exit code `2`.
+   - **Kiểm tra kết nối và danh mục (Catalog Probe)**: Kiểm tra kết nối và identity của AO daemon (`GET /api/v1/identity`) và catalog gateway (`GET /v1/models`). Lệnh `doctor` chỉ chứng minh: gateway reachable, `CLIPROXY_KEY` được chấp nhận, `/v1/models` trả catalog hợp lệ và model yêu cầu xuất hiện trong catalog. **Tuyệt đối không đồng nhất sự hiện diện của model trong catalog với credential eligibility hay usable capacity** (`providerCallPerformed: false`, `credentialEligibility: "NOT_OBSERVED"`).
+   - **Kiểm tra công cụ thực thi (`requiredTools`)**: `git` luôn là công cụ bắt buộc cho Slice 8A. Các công cụ khác (Python, Node, Go...) chỉ được kiểm tra khi `RunSpec` khai báo tường minh trong `requiredTools`. `doctor` dùng `exec.LookPath` hoặc kiểm tra file thực thi trực tiếp, tuyệt đối không dựng shell command từ giá trị `RunSpec`; tên công cụ phải qua xác thực chặt chẽ (không chứa đường dẫn hay shell metacharacter). Go được dùng để build/test chính `agents-coworkers` nhưng không phải prerequisite mặc định của target project; Node không được hardcode làm prerequisite.
+   - **Chính sách không gian làm việc (`workspacePolicy`)**:
+     * `productRootMustBeClean: true`: Checkout gốc Product (`AI Auto Video Creator`) bắt buộc phải ở trạng thái sạch hoàn toàn (`git status` clean).
+     * `executionWorkspaceDirtyPolicy`: Nhận giá trị `require_clean` (mặc định) hoặc `allow_dirty_recorded`. Nếu `allow_dirty_recorded`, worktree thực thi được phép dirty và SHA-256 của output `git status --porcelain=v1 -z` sẽ được ghi nhận; không tự suy đoán mọi dirty state là "expected".
+   - **Không đụng chạm Lease**: `doctor` không kiểm tra hoặc acquire lease.
+   - **Xuất kết quả**: Xuất `DoctorReport` qua `stdout`/JSON; **tuyệt đối không tạo hoặc sửa đổi `RunManifest`** và **không nhận cờ `--manifest`**.
+
+2. **Gắn kết phiên điều khiển (`coworkers attach`)**:
+   ```bash
+   coworkers attach --session <session-id> --workspace <path> --spec <path-to-run-spec.json> --manifest <path-to-run-manifest.json> [--json]
+   ```
+   - Gắn kết control-plane vào session/project hiện có trên AO daemon. Cờ `--manifest` là đường dẫn xuất tệp (output path).
+   - **Kiểm tra Workspace Dirty Policy**:
+     * Product root checkout bị dirty -> luôn lập tức dừng và thoát với exit code `2`.
+     * Nếu `executionWorkspaceDirtyPolicy == "require_clean"` mà execution workspace bị dirty -> exit code `2`.
+     * Nếu `executionWorkspaceDirtyPolicy == "allow_dirty_recorded"` mà execution workspace bị dirty -> cho phép tiếp tục (PASS) và tính toán băm `porcelainSha256` từ raw output `git status --porcelain=v1 -z` để ghi vào `worktreeBinding`.
+   - **Kiểm tra Run Lease (Chỉ gọi API inspect read-only)**:
+     * Lease root: `<executionWorkspace>/.agents-coworkers/recovery-leases`. Tên tệp lease suy từ SHA-256 của `runOwner + "\n" + taskId` với `runOwner = RunSpec.runId`, `taskId = "__run__"`.
+     * `attach` **tuyệt đối không gọi `Acquire` hoặc `Release`** vì không có tiến trình run dài hạn giữ lease trong Slice 8A.
+     * `FREE`: Cho phép `attach` tiếp tục tạo manifest.
+     * `OWNED` (khớp `runId` và binding hiện hành): Cho phép đọc lại thành công lũy đẳng (idempotent readback).
+     * `LOCKED` (thuộc owner/task khác): Xung đột quyền sở hữu -> lập tức thoát với exit code `2`.
+   - **Tự động tạo mới manifest nếu chưa có sẵn**:
+     * Nếu manifest chưa tồn tại: lệnh `attach` sẽ tạo mới sau khi kiểm tra hợp lệ.
+     * Nếu manifest đã tồn tại và khớp hoàn toàn (`runId`, `runSpecSha256`, session, repository và worktree binding): trả về thành công lũy đẳng (idempotent success), không ghi đè lại.
+     * Nếu manifest đã tồn tại nhưng bị hỏng cấu trúc hoặc sai lệch binding: fail-closed và thoát với exit code `2`.
+   - **Thuật toán Worktree Binding bắt buộc**: Endpoint `GET /api/v1/sessions/{id}` của AO (SessionView) không trả về đường dẫn thư mục vật lý của worktree; do đó hệ thống không được tuyên bố xác minh worktree chỉ bằng lệnh GET session. Lệnh `attach` bắt buộc thực thi 9 bước tuần tự:
+     1. Đọc session qua AO API và lấy project ID + branch;
+     2. Canonicalize target root và explicit execution workspace path;
+     3. Chạy `git worktree list --porcelain -z` trên đúng repository;
+     4. Tìm đúng một worktree có branch bằng session branch;
+     5. Path canonical của worktree phải bằng execution workspace;
+     6. HEAD phải bằng expected HEAD/baseline theo trạng thái run;
+     7. Repository common-dir và identity phải khớp target repo;
+     8. Nếu không có worktree, có nhiều kết quả, detached ngoài contract hoặc mismatch -> lập tức thoát với exit code `2`;
+     9. Tuyệt đối không đọc `ao.db` và không suy physical path từ `SessionView`.
+   - **Ghi nguyên tử (Atomic Write)**: Tạo `RunManifest` qua cơ chế atomic write: ghi tệp tạm -> gọi fsync/close -> rename sang `--manifest`.
+
+3. **Báo cáo trạng thái phiên và run lease (`coworkers status`)**:
+   ```bash
+   coworkers status --manifest <path-to-run-manifest.json> [--json]
+   ```
+   - Ở Slice 8A, lệnh `status` chỉ đọc `run-manifest.json` và trạng thái live read-only: manifest hiện hành, identity endpoint của daemon/gateway, phiên/profile được gắn kết, workspace/baseline SHA, và trạng thái quyền sở hữu run lease.
+   - Nếu manifest bị thiếu hoặc hỏng định dạng: lập tức thoát với exit code `2`. Lệnh `status` **không đọc `RunSpec` để tự tái tạo binding** và **không sửa đổi manifest**.
+   - **Không hiển thị Task DAG**: Tuyệt đối không có trường Task DAG nào trong Slice 8A. Trạng thái task DAG chỉ xuất hiện sau khi Slice 8B được triển khai.
+   - **Quy chuẩn Lease**: `FileLease` dùng `O_EXCL` để phối hợp độc quyền giữa các process `coworkers`/`recovery` cùng tuân thủ wrapper contract. Nó không phải global AO lock và không ngăn client AO bên ngoài sử dụng session. Không có TTL và không tự động phá vỡ stale lease. Lệnh `status` luôn re-inspect trạng thái lease thực tế từ `workspaceRoot`, `runOwner`, và `taskId: "__run__"`; **không tin tưởng `observedState` cũ đã ghi trong manifest**. Trạng thái hiển thị gồm `FREE`, `OWNED`, hoặc `LOCKED`. Tuyệt đối không dùng trạng thái `ACQUIRED` trong Slice 8A. PID chỉ là metadata giám sát, không kiểm tra PID còn sống để tự phá lease. Slice 8A chỉ bổ sung API inspect read-only cho status, không thay đổi ngữ nghĩa Acquire/Release.
+
+4. **Từ chối thực thi lệnh chạy tự động (`coworkers run`)**:
+   ```bash
+   coworkers run --spec <path-to-run-spec.json>
+   ```
+   - Trong Slice 8A, lệnh này bắt buộc luôn trả về mã thoát `1` với thông báo lỗi: `coworkers run is not supported until Slice 8B is accepted`.
+
+#### Ma trận mã thoát chuẩn hóa:
+- `0`: Thành công (success).
+- `1`: Lỗi CLI usage hoặc lệnh chưa hỗ trợ (`run` luôn trả về mã thoát `1`).
+- `2`: Lỗi kiểm tra / xác thực (validation, identity, baseline, worktree, hoặc lease conflict).
+- `3`: Endpoint không khả dụng hoặc hết thời gian chờ (endpoint unavailable hoặc timeout).
+
+### 8.2. Hợp đồng Run Spec và Run Manifest (Bản thảo đề xuất / PROPOSED)
+
+Hệ thống sử dụng định dạng JSON thuần túy để triển khai Slice 8A bằng thư viện chuẩn của Go (`encoding/json`), không phụ thuộc thư viện bên ngoài.
+
+#### 1. Tệp đặc tả lượt chạy (`run-spec.json` — Immutable User Input):
+```json
+{
+  "schemaVersion": "run-spec/v1-draft",
+  "runId": "run-20261001-sample-001",
+  "description": "Sample autonomous run specification",
+  "target": {
+    "targetRoot": "<TARGET_REPO_ROOT_PATH>",
+    "executionWorkspace": "<RUN_WORKTREE_PATH>",
+    "baselineSha": "<BASELINE_SHA>",
+    "expectedBranch": "<AO_SESSION_BRANCH>"
+  },
+  "workspacePolicy": {
+    "productRootMustBeClean": true,
+    "executionWorkspaceDirtyPolicy": "require_clean"
+  },
+  "requiredTools": [
+    {
+      "name": "git",
+      "required": true
+    }
+  ],
+  "endpointPolicy": {
+    "aoDiscovery": "flag_env_runfile_candidates_fail_closed",
+    "gatewayDiscovery": "flag_env_historical_default_fail_closed"
+  },
+  "concurrency": {
+    "maxConcurrency": 3
+  },
+  "profiles": {
+    "orchestrator": {
+      "model": "<ORCHESTRATOR_MODEL>",
+      "reasoningEffort": "low"
+    },
+    "worker": {
+      "model": "<WORKER_MODEL>",
+      "reasoningEffort": "high"
+    }
+  },
+  "documentation": {
+    "targetRepoDocs": [
+      "<TARGET_REPO>/docs/architecture.md",
+      "<TARGET_REPO>/docs/contracts.md"
+    ],
+    "controlPlaneDocs": [
+      "docs/02-ARCHITECTURE.md",
+      "docs/06-OPERATIONS.md"
+    ]
+  },
+  "policies": {
+    "approvalPolicy": "per_task_delegated",
+    "evidenceDir": "evidence/run-sample-001",
+    "integrationBranchPolicy": "local_only",
+    "cleanupOwnership": "run_lifecycle_bound"
+  }
+}
+```
+
+#### 2. Tệp manifest lượt chạy (`run-manifest.json` — Generated Output):
+```json
+{
+  "schemaVersion": "run-manifest/v1-draft",
+  "runId": "run-20261001-sample-001",
+  "runSpecSha256": "<RUN_SPEC_SHA256>",
+  "generatedAt": "2026-10-01T00:00:00Z",
+  "generatedBy": "coworkers attach",
+  "target": {
+    "targetRoot": "<TARGET_REPO_ROOT_PATH>",
+    "executionWorkspace": "<RUN_WORKTREE_PATH>",
+    "baselineSha": "<BASELINE_SHA>",
+    "currentHead": "<CURRENT_HEAD_SHA>",
+    "branch": "<AO_SESSION_BRANCH>",
+    "repositoryIdentity": "<REPO_COMMON_DIR_ID>"
+  },
+  "endpoints": {
+    "aoUrl": "<AO_RESOLVED_URL>",
+    "aoIdentity": "<AO_SERVICE_IDENTITY>",
+    "aoDiscoverySource": "run_file",
+    "aoPid": 12345,
+    "aoPidStatus": "VERIFIED",
+    "gatewayProbe": {
+      "url": "http://127.0.0.1:8317",
+      "catalogPath": "/v1/models",
+      "catalogStatus": "VERIFIED",
+      "observedModels": [
+        "<ORCHESTRATOR_MODEL>",
+        "<WORKER_MODEL>"
+      ],
+      "providerCallPerformed": false,
+      "credentialEligibility": "NOT_OBSERVED"
+    }
+  },
+  "sessionBinding": {
+    "sessionId": "<SESSION_ID>",
+    "projectId": "<PROJECT_ID>",
+    "sessionBranch": "<AO_SESSION_BRANCH>"
+  },
+  "worktreeBinding": {
+    "canonicalPath": "<RUN_WORKTREE_PATH>",
+    "worktreeBranch": "<AO_SESSION_BRANCH>",
+    "head": "<EXPECTED_HEAD>",
+    "isClean": true,
+    "dirtyPolicy": "require_clean",
+    "porcelainSha256": "<PORCELAIN_SHA256>",
+    "verifiedPorcelain": true
+  },
+  "attachedSessionProfile": {
+    "kind": "orchestrator",
+    "harness": "codex",
+    "model": "<ORCHESTRATOR_MODEL>",
+    "reasoningEffort": "low",
+    "status": "VERIFIED"
+  },
+  "lease": {
+    "workspaceRoot": "<CANONICAL_EXECUTION_WORKSPACE>",
+    "runOwner": "run-20261001-sample-001",
+    "taskId": "__run__",
+    "ownerId": "run-20261001-sample-001",
+    "observedState": "FREE",
+    "observedPid": 0
+  },
+  "sourceProvenance": {
+    "cliProxyApiSha": "2430354330af80b645f9ffb1a51e1e7c72c4cc8e",
+    "sourceAuditOnly": true
+  }
+}
+```
+
+### 8.3. Quy chuẩn Điều phối Concurrency (Slice 8B)
+- **Mức mặc định**: Tối đa **3 workers đồng thời**. Đây là giới hạn cao nhất đã được chứng minh an toàn trong môi trường live tại Gate 10.
+- **Mức mở rộng thử nghiệm (4–7 workers)**: Được gán nhãn **`EXPERIMENTAL_CAPACITY`**. Chỉ được kích hoạt khi:
+  1. Đã thu thập đủ dữ liệu telemetry từ Slice 8C chứng minh pool có đủ credential khỏe và không bị nghẽn rate limit;
+  2. Được cấp quyền tường minh (explicit authority) từ người dùng;
+  3. Có bằng chứng cô lập tài nguyên phần cứng (CPU, memory, disk I/O, separate git worktrees) đầy đủ;
+  4. Thực hiện phép thử dung lượng (capacity proof) riêng có ghi nhận bằng chứng.
+
+### 8.4. Quy chuẩn Quan sát Định tuyến & Telemetry (Slice 8C)
+- **Nguồn gốc mã nguồn (Provenance)**: Mã nguồn CLIProxyAPI được audit tại commit `2430354330af80b645f9ffb1a51e1e7c72c4cc8e`. Audit mã nguồn không chứng minh binary runtime đang chạy được biên dịch từ commit này.
+- **Header `X-CPA-TRACE-ID`**: Có định dạng `<YYYYMMDDHHMMSS>-<authIndex>-<requestID>`. `authIndex` là chuỗi 16-hex pseudonymous từ SHA-256 của credential seed. Nó có rủi ro liên kết tài khoản (correlation risk), không chứa raw token nhưng là metadata vận hành nhạy cảm bắt buộc phải redact và giới hạn thời gian lưu trữ (bounded retention); không tuyên bố là an toàn tuyệt đối.
+- Khi header `X-CPA-TRACE-ID` vắng mặt (do chưa chọn credential hoặc response không đi qua trace callback), bắt buộc ghi nhận `NOT_OBSERVED` hoặc `UNKNOWN`.
+- **Header `Retry-After`**: Chỉ được đọc khi xuất hiện thực tế trong response header từ gateway. Tuyệt đối không giả định mọi mã 429 hoặc 503 đều có `Retry-After`.
+- **Phân loại lỗi**: Kết hợp HTTP status code, structured error code/reason trong JSON body và response headers. Không tự động ánh xạ mọi mã 402 thành `deactivated_workspace` hay mọi mã 403 thành `VALIDATION_REQUIRED`. Trường hợp thiếu dữ liệu phân loại là `UNKNOWN`.
+- **Thứ tự ưu tiên**: (1) Native API / existing headers; (2) Safe client-side adapter; (3) Patch candidate chỉ sau khi có audit riêng và được duyệt. Không đề xuất patch là hướng mặc định.
+
+### 8.5. Behavior Matrix 8A
+Ma trận hành vi bắt buộc kiểm chứng cho Slice 8A:
+1. **Doctor**:
+   - Cờ `--spec` là bắt buộc; thiếu hoặc hỏng `RunSpec`: fail-closed, exit code 2;
+   - Không tạo hoặc sửa tệp `RunManifest`; không nhận cờ `--manifest`;
+   - Model catalog presence không nâng thành credential eligibility (`providerCallPerformed: false`, `credentialEligibility: "NOT_OBSERVED"`);
+   - Git luôn bắt buộc; các công cụ khác kiểm tra theo `requiredTools` (kiểm tra executable trực tiếp, invalid tool name fail-closed exit 2);
+   - Không tạo hoặc inspect lease;
+   - Kiểm tra redaction bí mật `CLIPROXY_KEY` trong stdout/stderr/logs;
+   - Kiểm tra cờ endpoint tường minh hoặc biến môi trường không hợp lệ sẽ fail-closed ngay lập tức, không fallback;
+   - Kiểm tra mã thoát: exit code 2 (validation/catalog/auth lỗi) và exit code 3 (unreachable/timeout) đúng contract;
+   - Xác nhận Product root checkout sạch (`git status` clean); chấp nhận dirty trên run worktree chỉ khi `executionWorkspaceDirtyPolicy == "allow_dirty_recorded"`.
+2. **Attach**:
+   - Kiểm tra `workspacePolicy`: `require_clean` + dirty worktree -> exit code 2; `allow_dirty_recorded` + dirty worktree -> PASS và ghi nhận `porcelainSha256`; Product root dirty luôn exit code 2;
+   - Kiểm tra run lease từ API inspect read-only (`workspaceRoot`, `runOwner`, `taskId: "__run__"`); tuyệt đối không gọi `Acquire` hoặc `Release`;
+   - `FREE`: cho phép tiếp tục; `OWNED` cùng run: idempotent readback; `LOCKED`: fail-closed, exit code 2;
+   - Thiếu hoặc hỏng `RunSpec`: exit code 2;
+   - Manifest chưa tồn tại (manifest absent): tạo mới bằng cơ chế atomic write thành công;
+   - Manifest đã tồn tại và khớp hoàn toàn (`runId`, `runSpecSha256`, session, repo, worktree): trả về thành công lũy đẳng (idempotent success);
+   - Manifest đã tồn tại nhưng hỏng cấu trúc hoặc sai lệch binding: fail-closed, exit code 2;
+   - Chỉ xác nhận đối tượng duy nhất `attachedSessionProfile`;
+   - Kiểm tra băm toàn vẹn `runSpecSha256`;
+   - Tuyệt đối không truy cập trực tiếp `ao.db`.
+3. **Status**:
+   - Re-inspect trạng thái lease thực tế từ `workspaceRoot`, `runOwner`, `taskId: "__run__"`; không tin tưởng `observedState` cũ trong manifest;
+   - Trạng thái lease: `FREE`, `OWNED`, `LOCKED` (tuyệt đối không có trạng thái `ACQUIRED`);
+   - Không tự động phá stale lease; PID chỉ là metadata giám sát;
+   - Xử lý các tình huống manifest: hợp lệ, thiếu, hoặc hỏng cấu trúc (thiếu/hỏng: exit code 2);
+   - Không tự động phục hồi hay tái tạo manifest từ `RunSpec`;
+   - Tuyệt đối không xuất hiện bất kỳ trường Task DAG nào trong Slice 8A.
+4. **CLI**:
+   - Cú pháp `coworkers doctor --spec <run-spec.json>`; không nhận cờ `--manifest`;
+   - Lệnh `attach` bắt buộc nhận cả `--spec` và `--manifest` (output path);
+   - Lệnh `status` bắt buộc nhận `--manifest`;
+   - Lệnh `run` bị từ chối rõ ràng với mã thoát `1` trong toàn bộ Slice 8A;
+   - Ma trận mã thoát chuẩn hóa: `0` (thành công), `1` (lỗi usage/lệnh chưa hỗ trợ), `2` (lỗi validation/conflict), `3` (endpoint unavailable/timeout);
+   - Xuất dữ liệu JSON có cấu trúc qua `stdout` và thông điệp chẩn đoán qua `stderr`.

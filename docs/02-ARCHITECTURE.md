@@ -1,81 +1,241 @@
-# 02 — Kiến trúc và capability gap
+# 02 — Technical Architecture
 
-## 1. Ownership và đường thực thi
+Tài liệu này xác định ranh giới kiến trúc, hợp đồng dữ liệu, cơ chế điều phối và chính sách cô lập của **agents-coworkers**.
 
-```text
-Mục tiêu + tài liệu target repo + authority
-  → orchestrator (AO / Codex / model + effort được user chọn theo run)
-  → task/dependency + ownership → Gemini workers (AO / Codex / gemini-3.8-flash-high / high)
-  → kết quả qua AO → orchestrator review → rework nếu có lỗi thật, hoặc tích hợp tuần tự → test → bàn giao
-                         ↓ mọi request model
-                  CLIProxyAPI → credential đủ điều kiện → provider
+---
+
+## 1. Tổng quan hệ thống và Entrypoint sản phẩm
+
+### 1.1. Mục tiêu kiến trúc
+Hệ thống **agents-coworkers** là lớp điều phối cộng tác đa tác nhân (multi-agent workforce) hoạt động trên máy trạm cục bộ của kỹ sư, tận dụng:
+1. **Agent Orchestrator (AO)**: Daemon quản lý vòng đời session, workspace git worktree, tiến trình agent, và giao tiếp agent native qua HTTP REST loopback. Mọi URL daemon đều bắt buộc phải dùng host loopback (`localhost`, `127.0.0.1`, hoặc `::1`). Endpoint được phân giải động theo thứ tự ưu tiên nghiêm ngặt (nguyên tắc fail-closed):
+   - (1) Cờ lệnh tường minh: `--ao-url <URL>` (nếu truyền URL không hợp lệ hoặc không phải loopback thì fail-closed ngay lập tức, không fallback; xác minh `GET /api/v1/identity`; không dùng OS port inspection để suy PID; ghi nhận `aoDiscoverySource: "explicit_url"`, `aoPid: 0`, `aoPidStatus: "NOT_OBSERVED"`);
+   - (2) Biến môi trường: `AO_BASE_URL` (nếu tồn tại nhưng không hợp lệ hoặc không phải loopback thì fail-closed, không fallback; xác minh `GET /api/v1/identity`; ghi nhận `aoDiscoverySource: "environment_url"`, `aoPid: 0`, `aoPidStatus: "NOT_OBSERVED"`);
+   - (3) Biến môi trường: `AO_RUN_FILE` (đường dẫn tệp run metadata, ví dụ `running.json`, không phải URL; nếu tệp hỏng hoặc endpoint sai thì fail-closed; parse `running.json`, kiểm tra PID > 0 và tiến trình còn sống; tạo loopback URL từ port; xác minh `GET /api/v1/identity`; ghi nhận `aoDiscoverySource: "run_file"`, `aoPid`, `aoPidStatus: "VERIFIED"`);
+   - (4) Các tệp candidate mặc định: `~/.ao/dev/running.json`, `~/.ao/running.json` (chỉ quét khi không có cả ba nguồn ưu tiên trên; quy tắc xác minh tương tự `AO_RUN_FILE`);
+   - (5) Lưu ý hợp đồng PID: `/api/v1/identity` chỉ trả `hostId` và `apiVersion` (hoặc `contractVersion`), không trả PID. Chỉ có `running.json` mới chứa PID, port và startedAt. Do đó, chỉ tuyên bố `aoPidStatus: "VERIFIED"` khi endpoint đến từ `running.json`. Tuyệt đối không dùng OS-specific port inspection để suy PID khi URL được cấp trực tiếp;
+   - (6) Nếu quét các candidate mặc định mà phát hiện nhiều hơn một daemon hợp lệ đang chạy thì **dừng lại ngay lập tức (fail-closed, exit 2)** và yêu cầu chỉ định rõ `--ao-url`. Nếu không tìm thấy daemon hợp lệ nào: exit 3. Cổng 3005 không phải là cổng kiến trúc cố định. Nếu endpoint hợp lệ nhưng không kết nối được hoặc timeout: exit 3. Nếu sai lệch parse/schema/identity/PID: exit 2.
+2. **CLIProxyAPI**: Cổng định tuyến LLM cục bộ (mặc định lịch sử: `http://127.0.0.1:8317`, cấu hình được qua cờ `--gateway-url` hoặc biến môi trường `COWORKERS_GATEWAY_URL`, áp dụng cùng nguyên tắc fail-closed: bắt buộc phải dùng host loopback `localhost`, `127.0.0.1`, hoặc `::1`; nếu URL tường minh hoặc biến môi trường không hợp lệ thì dừng lại ngay, không fallback). Xác thực gateway sử dụng biến môi trường `CLIPROXY_KEY` khi endpoint yêu cầu authentication; không đưa khóa vào RunSpec, RunManifest, argv, stdout, stderr hoặc evidence; không ghi raw Authorization header; thiếu credential bắt buộc hoặc 401/403: exit 2; không kết nối được hoặc timeout: exit 3; gateway trả catalog/JSON không hợp lệ: exit 2.
+
+```
++-----------------------------------------------------------------------------------+
+|                              USER OPERATIONAL SURFACE                             |
+|                                                                                   |
+|   Target Entrypoint: `coworkers` (cmd/coworkers - PROPOSED / NOT IMPLEMENTED)     |
+|   Legacy / Transition Tool: `recovery` (cmd/recovery - IMPLEMENTED)               |
++-----------------------------------------+-----------------------------------------+
+                                          |
+                                          v
++-----------------------------------------------------------------------------------+
+|                        CONTROL PLANE & RECOVERY CORE                              |
+|                                                                                   |
+|   - Discovery & Health Preflight          - Task DAG & State Machine              |
+|   - Workspace / Baseline Validation       - Autonomous Review-Rework Loop         |
+|   - Run Spec & Run Manifest               - Sequential Integration Barrier        |
+|   - Native Telemetry & Redaction          - Delivery Recovery (internal/recovery) |
++---------------------+---------------------------------------+---------------------+
+                      |                                       |
+       HTTP Loopback  |                        HTTP Loopback  |
+    (Dynamic Discover)|                        (Default: 8317)|
+                      v                                       v
++-----------------------------+         +-----------------------------+
+|    AGENT ORCHESTRATOR       |         |        CLIPROXYAPI          |
+|    (Daemon Runtime)         |         |      (Local Gateway)        |
+|                             |         |                             |
+| - Sessions & Worktrees      |         | - Account Pooling           |
+| - Turns & Conversation      |         | - Model Routing             |
+| - Git Worktree Diffs        |         | - Cooldown & Failover       |
+| - Official SQLite (ao.db)   |         | - Trace ID Injection        |
++-----------------------------+         +-----------------------------+
 ```
 
-| Thành phần | Trách nhiệm | Không được đồng nhất |
-|---|---|---|
-| AO | Project, role/session, delegation/message, conversation/status, worktree, review surface và lifecycle | Spawn worker không tự chứng minh planning/scheduling toàn workflow |
-| Codex | Tool-loop đọc/sửa/chạy theo sandbox/approval của session | Không tự cấp quyền hoặc quản lý pool |
-| CLIProxyAPI | Catalog/translation, chọn credential, affinity, cooldown, retry/failover | Không quản lý task graph, Git integration hoặc side effect của tools |
-| agents-coworkers | Nối thành vòng điều phối, contract ownership, acceptance, recovery và tính năng còn thiếu có căn cứ | Không chỉ là config; không viết lại các primitive upstream |
-| Target repo | Source, contract, test và acceptance sản phẩm; AI Video Creator là một ví dụ | Không phụ thuộc runtime vào workforce; P8 không phải workforce gate |
+### 1.2. Quyết định Entrypoint: Thin Control-Plane CLI (`coworkers`)
+Theo quyết định kiến trúc [D014](03-DECISIONS.md#d014--target-product-entrypoint-cli-coworkers):
+- **Tên entrypoint**: Giao diện người dùng mục tiêu của sản phẩm là lệnh CLI `coworkers`.
+- **Ranh giới mỏng (Thin Client)**: `coworkers` là thin control-plane CLI, gọi trực tiếp AO backend và CLIProxyAPI qua các API loopback chính thức theo endpoint discovery policy đã được xác thực.
+- **Không cạnh tranh trạng thái**: Hệ thống **không** xây dựng daemon riêng, **không** tạo cơ sở dữ liệu riêng, và tuyệt đối **không đọc/ghi trực tiếp** tệp SQLite `ao.db`. AO daemon là nguồn sự thật duy nhất (single source of truth) về phiên và tiến trình.
+- **Tái sử dụng lõi phục hồi**: Toàn bộ logic checkpoint bền vững, write-ahead delivery uncertain, session preflight, và run lease được tái sử dụng trực tiếp từ package `internal/recovery`.
+- **Phân tách quá độ**: `cmd/recovery` hiện là công cụ phục hồi hẹp và được duy trì tính tương thích ngược; mã nguồn mục tiêu sẽ đặt tại `cmd/coworkers` (PROPOSED / NOT IMPLEMENTED) mà không sao chép logic recovery.
+- **Phân tách Hợp đồng Dữ liệu (RunSpec vs RunManifest)**:
+  * `RunSpec` (định dạng JSON, input do người dùng cung cấp, `schemaVersion = "run-spec/v1-draft"`): bất biến sau khi run bắt đầu; phân biệt rõ `targetRoot` là checkout gốc của Product và `executionWorkspace` là worktree thực thi AO; `expectedBranch` sử dụng placeholder `<AO_SESSION_BRANCH>` (đại diện cho nhánh AO session/worktree dự kiến); chứa baseline SHA, profiles, policies, và delegated authority. Tuyệt đối không chứa `aoUrl` hay `gatewayUrl`; việc phân giải endpoint được định nghĩa qua `endpointPolicy` (không chứa URL). Chứa chính sách công cụ `requiredTools` (`git` luôn bắt buộc cho Slice 8A; các công cụ khác chỉ kiểm khi khai báo, kiểm tra trực tiếp qua `exec.LookPath`, tên công cụ không chứa path hoặc shell metacharacters; Go/Node không phải runtime prerequisite mặc định của target repo) và chính sách workspace `workspacePolicy` (`productRootMustBeClean: true`, `executionWorkspaceDirtyPolicy`: `require_clean` [mặc định] hoặc `allow_dirty_recorded`).
+  * `RunManifest` (định dạng JSON, output sinh ra duy nhất từ `coworkers attach`, `schemaVersion = "run-manifest/v1-draft"`): chứa `runSpecSha256`, `generatedBy: "coworkers attach"`, resolved endpoints (aoUrl, aoIdentity, aoDiscoverySource, aoPid, aoPidStatus), `gatewayProbe` (url, catalogPath: "/v1/models", catalogStatus: "VERIFIED", observedModels, `providerCallPerformed: false`, `credentialEligibility: "NOT_OBSERVED"`), target repository identity, baseline SHA, current HEAD, `sessionBranch` và `worktreeBranch` (hai giá trị phải khớp nhau), `worktreeBinding` (canonicalPath, worktreeBranch, head, isClean, dirtyPolicy, porcelainSha256, verifiedPorcelain), đối tượng cấu hình duy nhất `attachedSessionProfile` (kind, harness, model, reasoningEffort, status), `lease` (workspaceRoot, runOwner, taskId: "__run__", ownerId, observedState: "FREE", observedPid: 0; không có trạng thái ACQUIRED), source provenance, và timestamps. Tuyệt đối không chứa secret (token, cookie, raw email, hoặc raw credential filename) và không chứa endpoint input dư thừa.
+  * Vòng đời thống nhất của RunSpec và RunManifest:
+    - `coworkers doctor`: Chuẩn hóa cú pháp: `coworkers doctor --spec <run-spec.json> [--ao-url <url>] [--gateway-url <url>] [--json]`. Cờ `--spec` là bắt buộc (thiếu, hỏng hoặc sai schema RunSpec: exit 2). Lệnh `doctor` không nhận cờ `--manifest`, không tạo hoặc sửa `RunManifest`, và không inspect hay acquire lease. Kiểm tra gateway reachable, `CLIPROXY_KEY` được chấp nhận, `/v1/models` trả catalog hợp lệ và model yêu cầu xuất hiện trong catalog (tuyệt đối không đồng nhất catalog với credential eligibility hay usable capacity; `providerCallPerformed: false`, `credentialEligibility: "NOT_OBSERVED"`). Kiểm tra runtime tools theo `requiredTools` (`git` bắt buộc; Go/Node không phải prerequisite mặc định của target repo).
+    - `coworkers attach`: Đọc `RunSpec`. Nhận `--session`, `--workspace` và `--manifest` (đây là output path). Kiểm tra chính sách workspace dirty (`productRootMustBeClean: true`, Product root dirty luôn exit 2; `require_clean` + dirty worktree: exit 2; `allow_dirty_recorded` + dirty worktree: PASS và ghi `porcelainSha256` là SHA-256 của `git status --porcelain=v1 -z`). Xác minh session/worktree theo thuật toán 9 bước bắt buộc. Gọi API inspect read-only kiểm tra lease (`workspaceRoot`, `runOwner`, `taskId: "__run__"`); tuyệt đối không gọi `Acquire` hoặc `Release` vì không có process run dài hạn giữ lease (`FREE`: tiếp tục; `OWNED` cùng run: idempotent readback; `LOCKED`: exit 2). Tạo `RunManifest` bằng cơ chế ghi nguyên tử (atomic write: temp file -> fsync/close -> rename). Nếu manifest chưa tồn tại: tạo mới (lệnh attach tự động tạo mới, không đòi hỏi tệp có sẵn từ trước). Nếu manifest đã tồn tại và khớp hoàn toàn (`runId`, `runSpecSha256`, session, repository và worktree binding): trả về thành công lũy đẳng (idempotent success), không viết lại. Nếu manifest bị hỏng hoặc sai lệch binding: dừng lại ngay (fail-closed) và thoát với exit code `2`.
+    - `coworkers status`: Chỉ đọc `RunManifest` và trạng thái live read-only. Luôn re-inspect lease thực tế từ `workspaceRoot`, `runOwner`, `taskId: "__run__"`; tuyệt đối không tin `observedState` cũ trong manifest. Không tự ý phá stale lease, không kiểm PID còn sống để tự phá lease. Nếu manifest thiếu hoặc hỏng: thoát với exit code `2`. Không đọc `RunSpec` để tự tái tạo binding. Không chỉnh sửa manifest. Tuyệt đối không có trường Task DAG nào trong Slice 8A.
+  * Cú pháp lệnh: `coworkers doctor --spec <run-spec.json> [--ao-url <url>] [--gateway-url <url>] [--json]`, `coworkers attach --spec <run-spec.json> --session <id> --workspace <path> --manifest <output-path> [--ao-url <url>] [--gateway-url <url>]`, `coworkers status --manifest <path-to-run-manifest.json> [--ao-url <url>] [--gateway-url <url>] [--json]` (triển khai thuần túy bằng thư viện chuẩn Go `encoding/json`, không thêm YAML dependency).
+- **Thuật toán Worktree Binding bắt buộc cho `coworkers attach`**:
+  Tuyệt đối không tin riêng `RunSpec` hoặc `RunManifest`. Lệnh `attach` phải thực hiện xác thực tuần tự:
+  1. Đọc session qua AO API và lấy project ID + branch;
+  2. Canonicalize target root và explicit execution workspace path;
+  3. Chạy `git worktree list --porcelain -z` trên đúng repository;
+  4. Tìm đúng một worktree có branch bằng session branch;
+  5. Path canonical của worktree phải bằng execution workspace;
+  6. HEAD của worktree phải bằng expected HEAD/baseline theo trạng thái run;
+  7. Repository common-dir và identity phải khớp target repo;
+  8. Nếu không có worktree, có nhiều kết quả, worktree ở trạng thái detached ngoài contract, hoặc sai lệch đường dẫn -> lập tức thoát với exit code `2`;
+  9. Tuyệt đối không đọc `ao.db` và không suy physical path từ AO `SessionView`.
+- **Ma trận Mã thoát chuẩn hóa**:
+  * `0`: Thành công (success).
+  * `1`: Lỗi CLI usage hoặc lệnh chưa hỗ trợ (`coworkers run` trong Slice 8A luôn trả về mã thoát `1`).
+  * `2`: Lỗi kiểm tra / xác thực (validation, identity, baseline, worktree, hoặc lease conflict).
+  * `3`: Endpoint không khả dụng hoặc hết thời gian chờ (endpoint unavailable hoặc timeout).
+- **Phạm vi Slice 8A**: Chỉ thiết kế các khả năng kiểm tra và kiểm soát:
+  * `coworkers doctor`: Khám sức khỏe môi trường, runtime tools (`git` luôn bắt buộc; các công cụ khác kiểm tra theo `requiredTools` qua `exec.LookPath` mà không dựng shell command; Go/Node không phải runtime prerequisite mặc định của target repo; invalid tool name fail-closed exit 2), target root (bắt buộc sạch), baseline SHA và profile catalog. doctor chỉ chứng minh gateway reachable, CLIPROXY_KEY được chấp nhận, `/v1/models` trả catalog hợp lệ và model có trong catalog; không gọi provider completion, không nâng claim credential eligibility hay usable capacity (`providerCallPerformed: false`, `credentialEligibility: "NOT_OBSERVED"`). doctor không tạo manifest và không inspect hay acquire lease.
+  * `coworkers attach`: Kiểm tra chính sách workspace dirty: Product root dirty luôn exit 2; `require_clean` + dirty worktree: exit 2; `allow_dirty_recorded` + dirty worktree: PASS và ghi `porcelainSha256` của `git status --porcelain=v1 -z` (không tự suy mọi dirty state là "expected"). Gắn kết read-only/control-plane vào session/project hiện có theo đúng 9 bước worktree binding. Gọi API inspect read-only kiểm tra lease (`FREE`, `OWNED`, `LOCKED`); tuyệt đối không gọi `Acquire` hoặc `Release`.
+  * `coworkers status`: Chỉ báo cáo `RunManifest`, endpoint identity, single attached session/profile, workspace/baseline, và run lease. Luôn re-inspect lease từ `workspaceRoot`, `runOwner`, `taskId: "__run__"`, không tin `observedState` cũ trong manifest; không phá stale lease. Tuyệt đối không có trường Task DAG nào trong Slice 8A.
+  * Run Lease: `FileLease` theo source thật đặt tại `<executionWorkspace>/.agents-coworkers/recovery-leases`, tên file suy từ SHA-256(`runOwner + "\n" + taskId`). Slice 8A dùng run-level lease identity cố định: `runOwner = RunSpec.runId`, `taskId = "__run__"`, `ownerId = RunSpec.runId`, `workspaceRoot = canonical executionWorkspace`. Trạng thái quan sát được: `FREE` (lease file không tồn tại), `OWNED` (lease tồn tại và khớp run), `LOCKED` (lease thuộc owner/task khác). Tuyệt đối không dùng trạng thái `ACQUIRED` trong manifest Slice 8A. `FileLease` dùng `O_EXCL` để phối hợp độc quyền giữa các process `coworkers`/`recovery` cùng tuân thủ wrapper contract; nó không phải global AO lock và không ngăn client AO bên ngoài sử dụng session. Không có TTL và không tự phá stale lease. PID chỉ là metadata giám sát, không kiểm tra PID còn sống để tự phá lease. Slice 8A chỉ bổ sung API inspect read-only nhận đủ `workspaceRoot`, `runOwner`, và `taskId` cần thiết cho status và attach, không thay đổi ngữ nghĩa Acquire/Release.
+  * Gate 8A Oracle: Executable CLI invocation là oracle bắt buộc ở cấp độ L4 (Local Process Smoke). Unit tests (L2) và integration giả lập (L3) chỉ là bằng chứng bổ trợ.
+  * Danh sách tệp cho phép chính xác của Slice 8A (Exact File Allowlist — 17 files, không dùng wildcard):
+    - `cmd/coworkers/main.go`
+    - `cmd/coworkers/main_test.go`
+    - `internal/workforce/control/types.go`
+    - `internal/workforce/control/run_spec.go`
+    - `internal/workforce/control/run_spec_test.go`
+    - `internal/workforce/control/manifest.go`
+    - `internal/workforce/control/manifest_test.go`
+    - `internal/workforce/control/discovery.go`
+    - `internal/workforce/control/discovery_test.go`
+    - `internal/workforce/control/doctor.go`
+    - `internal/workforce/control/doctor_test.go`
+    - `internal/workforce/control/attach.go`
+    - `internal/workforce/control/attach_test.go`
+    - `internal/workforce/control/status.go`
+    - `internal/workforce/control/status_test.go`
+    - `internal/recovery/lease.go` (giới hạn: chỉ bổ sung API inspect read-only nhận workspaceRoot, runOwner, taskId cần cho status và attach; không đổi Acquire/Release semantics; không TTL, không auto-break stale lease)
+    - `internal/recovery/lease_test.go`
+    Không sửa `go.mod`/`go.sum`; chỉ sử dụng thư viện chuẩn của Go.
 
-## 2. Source đối chiếu và mức chứng minh
+---
 
-Các link AO dưới đây đối chiếu checkout `1140dd62dc7bb588b987e2c44aa1ff4796fa732b`; CLIProxyAPI `2430354330af80b645f9ffb1a51e1e7c72c4cc8e`. Đây là source audit, không chứng minh binary gateway được build từ SHA đó. Bằng chứng runtime và giới hạn tập trung tại [05](05-VERIFICATION.md).
+## 2. Mô hình Task DAG và Vòng lặp tự vận hành (Slice 8B)
 
-| Capability | Exact source | Phân loại và giới hạn |
-|---|---|---|
-| Role/session và delegation | [sessions.go](../../agent-orchestrator/backend/internal/httpd/controllers/sessions.go), [dto.go](../../agent-orchestrator/backend/internal/httpd/controllers/dto.go), [delegation.go](../../agent-orchestrator/backend/internal/service/session/delegation.go): `DelegateTask` | Có native/source; Gates 7–8 có runtime role/tool-loop. `POST /api/v1/orchestrators/delegate` spawn worker với model/effort override; title refinement gửi orchestrator sau spawn, **không phải** tự phân rã mục tiêu. |
-| Giao việc/kết quả/review | [cli/send.go](../../agent-orchestrator/backend/internal/cli/send.go): `sendMessage/steerMessage` | Native; Gate 9 có review/rework component. Continuation fixture 7B–7C dùng GPT-5.5/low làm orchestrator, nhận reply A/B/C qua AO và ACCEPT ba diff/test; không có user relay. Rework thực tế `NOT OBSERVED`; đây chưa phải proof tự vận hành trên workload sản phẩm. |
-| Status và durable conversation | [httpd/events.go](../../agent-orchestrator/backend/internal/httpd/events.go), [conversations.sql](../../agent-orchestrator/backend/internal/storage/sqlite/queries/conversations.sql), [domain/conversation.go](../../agent-orchestrator/backend/internal/domain/conversation.go) | Có source CDC replay từ `change_log`, conversation/turn/plan persisted. `ConversationPlanStep` là step/status, không phải contract DAG/ownership/resource lease có enforcement. |
-| Worktree và review | [gitworktree/workspace.go](../../agent-orchestrator/backend/internal/adapters/workspace/gitworktree/workspace.go), [workspace_review.go](../../agent-orchestrator/backend/internal/service/session/workspace_review.go), [cli/review.go](../../agent-orchestrator/backend/internal/cli/review.go) | Gate 10 chứng minh 3 worktree; pilot 7B–7C chứng minh trên fixture với orchestrator GPT-5.5/low: worker C cherry-pick A/B đã ACCEPT và test chung 8/8. Rework thực tế, merge/push và tích hợp workload sản phẩm chưa được chứng minh. |
-| Quota routing | [selector.go](../../agent-orchestrator/CLIProxyAPI/sdk/cliproxy/auth/selector.go): `RoundRobinSelector.Pick/SessionAffinitySelector.Pick`; [conductor_selection.go](../../agent-orchestrator/CLIProxyAPI/sdk/cliproxy/auth/conductor_selection.go) | Có source + UNIT/SIMULATED; LIVE_ROUTING chỉ subset. Affinity giữ credential còn eligible; unavailable chọn lại qua fallback, không round-robin bắt buộc từng request. |
-| Retry/cooldown | [conductor_execution.go](../../agent-orchestrator/CLIProxyAPI/sdk/cliproxy/auth/conductor_execution.go): `Execute`; [antigravity_executor_credits.go](../../agent-orchestrator/CLIProxyAPI/internal/runtime/executor/antigravity_executor_credits.go): `decideAntigravity429` | Source đọc reason/RetryDelay, phân biệt full quota/short cooldown/soft retry; request-scoped stop có thể chặn retry. Không suy nguyên nhân từ 429 đơn lẻ; LIVE_FAILOVER chưa quan sát. |
-| Recovery delivery/turn | [cli/send.go](../../agent-orchestrator/backend/internal/cli/send.go), [chat/controller.go](../../agent-orchestrator/backend/internal/service/chat/controller.go): `RetryTurn`, `afterProject`, `drainLocked` | LIVE trên fixture: `exit-agent` → `resume-agent` native giữ session/worktree; delivery mới đánh thức session idle. T1/T2 bị `/conversation/interrupt` là expected cancellation theo lệnh user/coordinator, không phải phép thử provider recovery. Provider failure, daemon restart và unattended recovery vẫn `NOT OBSERVED`. |
+### 2.1. Cấu trúc Task Graph (DAG)
+Mỗi run được đặc tả thành một Đồ thị có hướng không chu trình (Directed Acyclic Graph - DAG) gồm các Task Nodes bền vững:
+- `TaskID`: Định danh duy nhất trong run (ví dụ `task-001-worker-a`).
+- `Dependencies`: Danh sách các `TaskID` tiên quyết phải đạt trạng thái `ACCEPTED` trước khi task này đủ điều kiện kích hoạt.
+- `Owner`: Vai trò được giao (Orchestrator, Worker A..N, Integration Worker).
+- `AssignedSession` & `AssignedWorktree`: Phiên AO và worktree Git độc quyền cho lane làm việc.
+- `FileAllowlist`: Danh sách đường dẫn tệp được phép sửa đổi; mọi vi phạm ghi ngoài allowlist đều dẫn đến fail-closed.
+- `ResourceNamespace`: Không gian tài nguyên cô lập (cổng mạng, schema database tạm, tệp chứng chỉ).
+- `DeliveryID` & `ClientMessageID`: Khóa idempotent bảo vệ việc gửi thông điệp tới AO.
+- `ArtifactSHA` & `GitHead`: Bằng chứng commit và digest tệp bàn giao.
+- `TestReceipt`: Biên nhận kết quả kiểm thử độc lập (lệnh chạy, mã thoát, log hash).
+- `ReviewVerdict`: Phán quyết của Orchestrator (`PENDING`, `ACCEPTED`, `REWORK`).
+- `RetryBudget`: Số lần cho phép retry/rework trước khi chuyển sang `BLOCKED`.
+- `IntegrationBarrier`: Rào chắn đồng bộ hóa ngăn việc ghép mã nguồn khi chưa có đủ review hợp lệ.
 
-## 3. Phần nối cần hoàn thiện, không dựng framework mới
+### 2.2. Vòng lặp tự vận hành (Autonomous Loop State Machine)
 
-Phân loại audit bắt buộc: **(1) có source và runtime evidence**, **(2) có source/config nhưng chưa proof runtime**, **(3) cần cấu hình/kết nối**, **(4) thiếu capability thật, cần code**. Bảng §2 ghi (1)/(2); task contract và đường nối dưới đây thuộc (3). Chưa có đủ bằng chứng để chốt một patch thuộc (4): schema plan thiếu DAG không tự chứng minh toàn AO thiếu mọi cách biểu diễn dependency. Capability audit 7A phải loại trừ native seam trước khi đưa exact code delta; không đổi NOT OBSERVED thành kết luận “phải viết framework”.
+```
+        +-------------------------------------------------------------+
+        |                          DISPATCH                           |
+        |  Scheduler chọn 1-3 workers theo DAG & capacity khả dụng    |
+        +------------------------------+------------------------------+
+                                       |
+                                       v
+        +-------------------------------------------------------------+
+        |                          EXECUTION                          |
+        |  Worker chạy trên worktree riêng, commit Git & sinh receipt |
+        +------------------------------+------------------------------+
+                                       |
+                                       v
+        +-------------------------------------------------------------+
+        |                     ORCHESTRATOR REVIEW                     |
+        |  Completion kích hoạt Orchestrator kiểm tra diff & test log |
+        +------------------------------+------------------------------+
+                                       |
+                      +----------------+----------------+
+                      |                                 |
+              Verdict = REWORK                  Verdict = ACCEPT
+                      |                                 |
+                      v                                 v
+        +---------------------------+     +---------------------------+
+        |          REWORK           |     |    INTEGRATION BARRIER    |
+        | Quay lại đúng worker /    |     | Mở khóa dependencies &    |
+        | session / worktree cũ     |     | cho phép tuần tự ghép mã  |
+        +-------------+-------------+     +-------------+-------------+
+                      |                                 |
+                      +---------------+                 v
+                                      |   +---------------------------+
+                                      |   |   SEQUENTIAL INTEGRATION  |
+                                      +-->| Ghép commit vào branch run|
+                                          | Chạy test tích hợp chung  |
+                                          +---------------------------+
+```
 
-**Pilot native 7A (24/09/2026):** binary AO đang chạy (`backend/ao.exe`, SHA-256 `dce49a699c848761a4f23d28a7e6f7218ab6530345062c99b6d356c63725b371`) phục vụ `POST /api/v1/orchestrators/delegate`, conversation/send và per-session profile. Run 7A dùng lịch sử **GPT-6-Astra/low** cho orchestrator; Astra tự dispatch ba review task, nhận ba native reply, đọc artifact và đưa verdict ([evidence](../evidence/run-20260924-phase7a-native-pilot/summary.md)). Đây là review-only, không là run 7B–7C.
+1. **Dispatch & Chính sách Concurrency**:
+   - **Mức mặc định tối đa**: Tối đa **3 workers đồng thời** (mức tối đa đã được kiểm chứng thực tế tại Gate 10 / Phase 6).
+   - Scheduler 8B lựa chọn từ **1 đến 3 workers** dựa trên các task sẵn sàng trong DAG và dung lượng khả dụng của pool.
+   - Mức **4–7 workers** được phân loại là **`EXPERIMENTAL_CAPACITY`**, chỉ được phép kích hoạt khi: (1) telemetry 8C cung cấp đủ căn cứ; (2) có authority riêng từ user; (3) có chứng minh cô lập tài nguyên/worktree hoàn chỉnh; và (4) thực hiện capacity proof riêng biệt. Tuyệt đối không mô tả 1–7 như dải năng lực sản xuất mặc định.
+2. **Execution**: Worker thực thi nhiệm vụ trong phạm vi `FileAllowlist` trên git worktree riêng, thực hiện commit cục bộ và sinh `TASK_RECEIPT`.
+3. **Review**: Khi worker hoàn tất turn, Orchestrator được kích hoạt tự động để đối chiếu diff git, kiểm tra biên nhận test và mã thoát.
+4. **Phán quyết REWORK & Ranh giới Không tạo lỗi giả trong Product**:
+   - Trong quá trình phát triển và kiểm chứng state machine (Gate 8B), oracle rework sử dụng **fixture cô lập có contract violation được seed trước**, không yêu cầu tạo lỗi nhân tạo trong Product repository.
+   - Khi chạy trên workload thật của Product (Slice 8D), Orchestrator chỉ phát chỉ thị REWORK khi phát hiện lỗi kỹ thuật thật sự trong mã nguồn hoặc kết quả test của worker.
+   - Task **bắt buộc** phải quay lại đúng worker/session/worktree ban đầu nếu phiên còn hợp lệ.
+5. **Phán quyết ACCEPT**: Khi đáp ứng đầy đủ tiêu chí, Orchestrator phê duyệt task, giải phóng các task phụ thuộc và mở rào cản tích hợp.
+6. **Sequential Integration**: Tác nhân tích hợp (Integration Worker) thực hiện tích hợp tuần tự các commit đã được duyệt vào branch tích hợp của run (`integration/run-<id>`) trên một worktree tích hợp riêng biệt, sau đó chạy test tổng thể.
+7. **Bảo toàn khi sự cố & Human Stop**:
+   - Nếu tiến trình gặp sự cố (crash), cơ chế phục hồi sử dụng checkpoint ghi trước (`DELIVERY_UNCERTAIN`) và gửi thăm dò `recover-only` cùng `ClientMessageID` để khôi phục trạng thái mà không phát lại side effect đã thực hiện.
+   - Khi người dùng phát tín hiệu Stop, task lập tức chuyển sang trạng thái `CANCELLED` (terminal) và fail-closed toàn bộ vòng lặp.
 
-**Continuation 7B–7C:** đúng orchestrator fixture `ao-phase5-repo-1` được readback **GPT-5.5/low**; không gọi profile này là Astra. Hai worker code A/B chạy song song, được orchestrator ACCEPT; C tích hợp tuần tự và combined unittest 8/8 PASS ([evidence](../evidence/run-20260924-phase7bc-integration-continuation/summary.md)). Rework thực tế `NOT OBSERVED`. Profile mới không chứng minh tình trạng quota của GPT-6-Astra.
+---
 
-**Existing:** AO lưu session/worktree binding và conversation messages/turns/plans trong SQLite dưới AO data dir; CLIProxyAPI sở hữu credential/cooldown. Không ghi trực tiếp DB của AO hoặc tạo nguồn session status cạnh tranh.
+## 3. Quan sát định tuyến và Năng lực Native (Slice 8C)
 
-**Cần cấu hình/kết nối:** prompt orchestrator ở [06](06-OPERATIONS.md) phải yêu cầu task record trong conversation: task ID, dependency, owner, file allowlist, resource ownership, session/worktree, revision/hash, test receipt, review verdict, next action. Worker trả artifact qua AO; orchestrator đọc diff/test, không chỉ tin summary. Bản tóm tắt/handoff phải trỏ về durable record và artifact, không biến chat volatile thành nguồn duy nhất.
+### 3.1. Ma trận Năng lực Native (Native Seams Matrix)
+Căn cứ vào kết quả audit trực tiếp mã nguồn của `CLIProxyAPI` (checkout tại commit exact `2430354330af80b645f9ffb1a51e1e7c72c4cc8e`; lưu ý: việc audit mã nguồn không chứng minh binary runtime đang chạy được biên dịch từ đúng commit này) và `agent-orchestrator`:
 
-**Gap contract:** source plan step chưa có structured DAG, file/resource ownership và integration receipt cho cả workflow. Đề xuất trước mắt lưu record có cấu trúc trong conversation qua API native; semantic enforcement do orchestrator thực hiện và phải kiểm chứng. Nếu không đủ durability/query/enforcement, đề xuất delta integration tối thiểu với schema/owner/idempotency/oracle, không tự thêm DB/framework.
+| Năng lực / Tín hiệu Quan sát | Nguồn Seam (CLIProxyAPI / AO) | Phân loại | Khả năng quan sát & Ranh giới an toàn |
+| :--- | :--- | :--- | :--- |
+| **Downstream Trace & Credential Correlation** | Header `X-CPA-TRACE-ID` (`cpa_trace.go:FormatCPATraceID`) | `AVAILABLE` | Header downstream có định dạng `<YYYYMMDDHHMMSS>-<authIndex>-<requestID>`. Trong đó `authIndex` là chuỗi băm sha256 16-hex (`stableAuthIndex`) từ seed của credential. Có rủi ro liên kết tài khoản (correlation risk), không chứa raw token nhưng là metadata vận hành nhạy cảm; bắt buộc phải lọc (redaction) và lưu trữ có giới hạn (bounded retention); không được coi là an toàn tuyệt đối. Có thể vắng mặt khi chưa chọn được credential hoặc response không đi qua trace callback; khi vắng mặt phải ghi nhận `NOT_OBSERVED` hoặc `UNKNOWN`. |
+| **Rate Limiting & Cooldown Window** | Header `Retry-After` (`handlers_errors.go`, `SafeResponseHeaders`) | `AVAILABLE` | Chỉ đọc khi thực sự xuất hiện trong response header từ gateway/upstream khi gặp lỗi `429` hoặc `503`. Không giả định mọi lỗi 429/503 đều có `Retry-After`. |
+| **HTTP Status Code Classification** | Mã trạng thái HTTP downstream (`402`, `403`, `429`, `503`, `200`) | `AVAILABLE` | Quan sát trực tiếp trên client. Tuyệt đối không tự động ánh xạ mọi 402 thành `deactivated_workspace` hay mọi 403 thành `VALIDATION_REQUIRED` (đây chỉ là observed subcodes ở một số run lịch sử). Bộ phân loại lỗi phải kết hợp status code + structured error code/reason trong body + headers; thiếu dữ liệu thì phân loại `UNKNOWN`. |
+| **AO Session & Turn Introspection** | Endpoint `/api/v1/sessions/{id}`, `/conversation`, `/settings` | `AVAILABLE` | Truy vấn trực tiếp trạng thái turn, model readback, reasoning effort qua REST API loopback của AO daemon. Lưu ý: SessionView không trả về đường dẫn worktree vật lý. |
+| **Gateway Static Cooldown Config** | Tệp cấu hình `config.yaml` / `config.runtime.yaml` | `CONFIG_ONLY` | Cấu hình tĩnh về thời gian cooldown và giới hạn retry. Không thể quan sát động từng lần chuyển đổi trạng thái qua header. |
+| **Dynamic Credential Remaining Quota** | Bộ nhớ nội bộ (in-memory) của CLIProxyAPI | `NOT EXPOSED` | Gateway không cung cấp trường header nào phản ánh số lượng quota còn lại của từng credential cho client downstream. |
+| **In-flight Failover Attempts Trail** | Vòng lặp retry nội bộ của conductor trong CLIProxyAPI | `NOT EXPOSED` | Gateway tự động thử xoay vòng các credential khi gặp lỗi, nhưng downstream response chỉ mang trace của credential cuối cùng, không kèm lịch sử các credential đã thử trước đó. |
+| **Safe Gateway Log Adapter** | Bộ chuyển đổi đọc tệp log của CLIProxyAPI | `ADAPTER_CANDIDATE` | Adapter đọc log cục bộ đã được lọc và ẩn danh (redacted) để thu thập đường dẫn failover mà không sửa mã nguồn gateway. |
+| **Failover Trail Downstream Header** | Bản vá bổ sung header downstream tại CLIProxyAPI | `PATCH_CANDIDATE` | Đề xuất bổ sung downstream header tùy chọn `X-CPA-Failover-Attempts` nếu cần quan sát chính xác số lần failover. Chỉ là phương án ứng viên sau khi có audit riêng và được duyệt; không phải hướng mặc định. |
 
-**Gap recovery (7D):** live proof xác nhận `exit-agent`/`resume-agent` native tiếp tục cùng session C và delivery mới đánh thức session đang idle; không restart daemon. T1/T2 bị `/conversation/interrupt` nên kết quả `interrupted` là expected cancellation, không chứng minh thiếu auto-wake. T3 gửi rõ ràng sau interruption chạy `running → completed`; đây chỉ là explicit wake. Provider failure, daemon restart, pool exhaustion và unattended recovery vẫn `NOT OBSERVED`.
+### 3.2. Nguyên tắc Telemetry an toàn
+- **Thứ tự ưu tiên giải pháp**: (1) Sử dụng API và headers native sẵn có; (2) Xây dựng client adapter an toàn; (3) Bản vá header chỉ là phương án ứng viên sau audit riêng và approval.
+- **Không giả định**: Tuyệt đối không giả định `agents-coworkers` có thể nhìn thấy credential, cooldown, hoặc failover trail nếu gateway chưa cung cấp qua response header chính thức.
+- **Dữ liệu lưu trữ tối thiểu**: Bản ghi telemetry chỉ được phép lưu trữ: credential ID đã băm (16-hex), số lượt thử (attempt), model ID, provider, nhóm trạng thái (status category), thời gian cooldown (nếu có `Retry-After`), và `X-CPA-TRACE-ID`. Tuyệt đối không ghi nhận API keys, tokens, cookies, hoặc thông tin cá nhân.
+- **Phân loại lỗi chặt chẽ**:
+  * Kết hợp HTTP status code, structured error code/reason trong JSON body và response headers.
+  * Không suy diễn: thiếu dữ liệu phân loại là `UNKNOWN`.
+- **Thay thế chỉ tiêu coverage**: Không áp dụng chỉ tiêu coverage hình thức một cách máy móc; thay thế bằng ma trận hành vi và xử lý lỗi (behavior/error matrix) bao quát mọi tình huống trả về của gateway.
 
-**Prototype 7D recovery:** native `RetryTurn` tái phát durable prompt thành turn mới và phù hợp cho retry do người dùng yêu cầu, không tự phân biệt outage với Stop. `steer-or-send` có durable `clientMessageId` và `recoverOnly`, giải quyết delivery uncertain nhưng không lập lịch retry theo `nextRetry`. Transition-message dispatcher của AO có durable outbox/poll riêng cho interface transition, không phải API tổng quát cho workload. Delta nhỏ nhất được chọn là dispatcher giới hạn trong `agents-coworkers`: checkpoint task/delivery/session/turn/artifact/side-effect/retry; write-ahead `DELIVERY_UNCERTAIN` trước provider I/O; đọc AO và Git trước send; recover-only với cùng ID; không gửi khi blocked/completed/human Stop. AO HTTP adapter chỉ dùng loopback API chính thức. AO turn completed chưa đủ đóng task: reply phải có receipt đúng task ID, accepted và artifact SHA. Không patch AO/CLIProxyAPI.
+---
 
-Hardening tiếp theo giữ nguyên trạng thái `DELIVERED`/`DELIVERY_UNCERTAIN` khi Observe tạm lỗi, phân trang conversation tới khi tìm đúng turn hoặc hết lịch sử authoritative, và fail-closed nếu `steer-or-send` trả `steered`. Send mới chỉ được phép sau preflight session idle/owner và trong lease file độc quyền của wrapper run-owned; lease này không được diễn giải thành global lock đối với mọi AO client. Human Stop được ghi `CANCELLED` trước lệnh interrupt và luôn terminal. Các contract này đã được kiểm bằng test cô lập; live disposable-session proof còn `NOT OBSERVED` khi daemon AO dùng chung đang dừng.
+## 4. Cách ly Workload và Ranh giới Tích hợp (Slice 8D)
 
-Preflight dùng đúng envelope AO `{session:{...}}`, khóa session/project/kind/harness/model/branch và lấy effort từ `conversation.settings.reasoningEffort`; branch AO phải bằng branch Git của artifact. Stop sau lost acceptance dùng recover-only cùng `clientMessageId`, chỉ interrupt khi đúng recovered turn là live turn duy nhất. Nếu không xác nhận được AO đã dừng, checkpoint giữ terminal `CANCELLED_LOCAL_AO_STOP_UNCONFIRMED`; gọi `Step` không thể wake/send, còn một lệnh `Cancel` tường minh sau restart mới được phép đối chiếu lại. Lease path được suy từ workspace root cố định + run owner + task ID, không nhận path tùy ý và không tự phá stale lease.
+### 4.1. Quy tắc bất biến đối với Product Repository
+- **Product Root Read-Only (`INV-001`)**: Thư mục gốc (`Product ROOT checkout`) của `AI Auto Video Creator` luôn luôn ở chế độ **CHỈ ĐỌC (READ-ONLY)**. Mọi thao tác ghi trực tiếp vào Product root đều bị chặn đứng và coi là vi phạm an toàn nghiêm trọng.
+- **Quyền ghi trên Worktree cô lập**: Các git worktree cô lập được cấp quyền cho run có thể thực hiện ghi theo danh mục allowlist cụ thể của từng run. `INV-001` bảo vệ product root và không cấm các Product worktree được cấp quyền.
+- **Kiểm kê trước khi chạy (Pre-run Inventory)**: Trước khi kích hoạt bất kỳ run nào trên workload thật, hệ thống phải kiểm kê đầy đủ Product root, các worktree AO cũ còn tồn tại, commit baseline, dirty diff hiện có, và quyền hạn (authority) được cấp.
+- **Workload có nguồn gốc xác thực**: Nhiệm vụ workload bắt buộc phải được trích xuất từ tài liệu kiến trúc, roadmap, hoặc contract có thẩm quyền của AI Auto Video Creator sau khi thực hiện audit chỉ đọc.
 
-Giới hạn Stop: AO `POST /conversation/interrupt` là session-wide và không nhận expected turn ID; Observe/precheck rồi POST có race. Prototype chỉ cho phép gọi route này khi checkpoint tuyên bố session disposable thuộc run và độc quyền. `SessionExclusive` là assertion/lease của wrapper run-owned, không phải khóa toàn cục ngăn AO client khác; vì vậy không claim exact-turn Stop trên session chia sẻ. Delta AO tối thiểu nếu cần bảo đảm triệt để là `POST /sessions/{sessionId}/conversation/turns/{turnId}/interrupt` với expected controller generation; service phải kiểm target vẫn là active turn dưới cùng controller lock và trả `409 CHAT_TURN_NOT_ACTIVE` khi fence lệch.
+### 4.2. Cơ chế Worktree và Ranh giới Tự Merge
+- **Worktree riêng cho Worker**: Mỗi worker hoạt động trên một git worktree hoàn toàn độc lập, tách biệt khỏi Product root và các worker khác.
+- **Integration Worktree riêng**: Quá trình tích hợp diễn ra trên một worktree tích hợp riêng biệt dành cho run.
+- **Định nghĩa "Tự merge"**: "Tự merge" trong phạm vi workforce **CHỈ CÓ NGHĨA** là tự động tích hợp các commit đã được Orchestrator chấp thuận (`ACCEPTED`) vào branch tích hợp cục bộ của run (`integration/run-<id>`).
+- **Nghiêm cấm Push vào Product Main**: Tác nhân **TUYỆT ĐỐI KHÔNG** tự động merge hoặc push mã nguồn vào branch `main` của Product repository. Mọi quá trình tích hợp sản phẩm thực tế dừng lại ở bước lập báo cáo audit đầy đủ và bàn giao cho người dùng quyết định.
 
-**Portability và Executable Self-Host (7E):**
-Phase 7E hoàn tất quy trình workforce và tự vận hành binary `recovery.exe` trên repository thứ hai `agents-coworkers`:
-- Worker B ghi nhận rework thực tế (OBSERVED): bổ sung matrix mã thoát quá trình (exit codes 0, 1, 2, 3), kiểm thử subprocess CLI và xử lý timeout context.
-- Worker C giải quyết dứt điểm rào cản test portability: sửa `TestGitArtifactReaderBindsHashAndHead` trong `internal/recovery/dispatcher_test.go` dùng fixture repo cô lập trong thư mục tạm thay cho kỳ vọng cứng branch tĩnh, giữ nguyên oracle xác minh hash, HEAD và branch không rỗng.
-- Executable `recovery.exe` được biên dịch trực tiếp từ mã nguồn đã tích hợp, thực thi preflight kiểm tra session identity/model/effort/branch, gửi task tới worker disposable qua AO API, bóc tách `TASK_RECEIPT` và chuyển checkpoint thành `COMPLETED` (Exit 0 LIVE).
-- Giới hạn chấp nhận: provider outage recovery LIVE, daemon restart recovery LIVE, và user Stop LIVE đều `NOT OBSERVED`; exact-turn Stop trên shared session unsupported/fail-closed.
+---
 
-**Lịch sử gián đoạn 7B:** pilot ban đầu có Codex auto-review/AO turn `503`; continuation dùng GPT-5.5/low theo lựa chọn run và hoàn tất audit. Không suy ra GPT-6-Astra hết quota. Lượt auto-review bổ sung của worker B không được tính test evidence; [evidence pilot ban đầu](../evidence/run-20260924-phase7bc-native-code-pilot/summary.md) và [continuation](../evidence/run-20260924-phase7bc-integration-continuation/summary.md) giữ riêng lịch sử với kết quả cuối.
+## 5. Mở rộng Dung lượng dựa trên Telemetry (Slice 8E)
 
-Luồng phục hồi đề xuất: ghi checkpoint task + delivery ID + hash artifact + side effects đã xác nhận → chờ theo Retry-After và budget → đọc lại AO turn/process/artifact → recover delivery cũ nếu uncertain → chỉ phát next action chưa hoàn tất. Hết budget thì giữ trạng thái chờ có reason/next retry, không tạo session/worktree mới để né lỗi và không replay mù thao tác không idempotent.
+### 5.1. Định vị lại Pool hiện có
+- Pool tài khoản hiện thời (**1 Codex + 7 Gemini**) là dữ liệu **inventory lịch sử** từ các đợt thử nghiệm trước ([run-20260923-phase8-pool-onboarding](../evidence/run-20260923-phase8-pool-onboarding/summary.md)), không đồng nghĩa với việc toàn bộ các tài khoản này đang sẵn sàng hoặc có thể sử dụng (usable capacity).
+- Mục tiêu danh nghĩa ban đầu (6 Plus + 8 Pro) chỉ là mục tiêu lịch sử đã superseded; không coi đây là điều kiện tiên quyết hay tiêu chí đóng Phase 8.
 
-## 4. Cách ly và integration
-
-Worktree cách ly file nhưng Git metadata dùng chung. Port/DB/schema/container/temp/certificate phải có run/task owner, namespace riêng và cleanup kiểm ownership/liveness. Shared files chỉ có một writer hoặc được chỉnh tuần tự theo dependency. Orchestrator theo profile của từng run giữ integration ownership; chỉ tích hợp diff đã review, theo base/hash đã ghi, rồi test chung. Quyền commit/merge phải được cấp riêng; read-only review artifact không được gọi là integration proof.
-
-## 5. Profile và đường cấu hình
-
-Path A vẫn ưu tiên: UI/API daemon chính thức, per-session model/effort và readback; không suy `high` từ default `low`. Config mẫu hiện tại là baseline lịch sử, không áp dụng đè defaults. Profile/giới hạn ở [01](01-PROJECT-CHARTER.md), thao tác ở [06](06-OPERATIONS.md).
-
-Path B: [patch effort CLI tùy chọn](../patches/agent-orchestrator/0001-cli-support-agent-effort.patch) khắc phục CLI mirror thiếu effort; không được áp dụng chỉ vì sửa docs. Nếu native/config không đủ một capability cần thiết, ghi gap, exact source seam, scope/verification và authority cho patch nhỏ.
-
-Candidate B/C (AO native `backend/internal/adapters/agent/opencode/`, `agy/`) vẫn dormant: chỉ xét khi Candidate A có lỗi kiến trúc tái hiện được, không vì quota hoặc lỗi setup.
+### 5.2. Chính sách Onboarding dựa trên Dữ liệu thực tế (Slice 8E Conditional)
+- **Slice 8E là conditional slice**: Nếu telemetry từ Slice 8C và 8D chứng minh pool hiện tại đủ dùng với tỷ lệ lỗi thấp, trạng thái Slice 8E là `NOT_TRIGGERED` hoặc `NOT_REQUIRED_WITH_EVIDENCE`; không cần onboarding thêm tài khoản và Phase 8 vẫn có thể đóng hợp lệ.
+- Chỉ tiến hành quy trình onboarding tài khoản mới khi dữ liệu đo lường (telemetry) từ Slice 8C và 8D chứng minh sự thiếu hụt dung lượng thực tế (tỷ lệ 429 quota cao, hàng đợi task tắc nghẽn) đối với một model hoặc profile cụ thể, và được người dùng cấp authority riêng.
+- Sử dụng đúng các công cụ và đường dẫn tệp thực tế trong kho mã nguồn:
+  * Script kiểm kê: `scripts/auth-inventory.ps1`
+  * Thư mục cấu hình gateway: `config/cliproxy/`
+  * Tuyệt đối không sử dụng các đường dẫn không tồn tại.

@@ -13,7 +13,7 @@ Integration templates, patches, tests, and audit evidence for operating a multi-
 | :--- | :--- |
 | **Project Charter & Invariants** | [docs/01-PROJECT-CHARTER.md](docs/01-PROJECT-CHARTER.md) |
 | **Technical Architecture** | [docs/02-ARCHITECTURE.md](docs/02-ARCHITECTURE.md) |
-| **Decision Ledger (D001–D010)** | [docs/03-DECISIONS.md](docs/03-DECISIONS.md) |
+| **Decision Ledger (D001–D015)** | [docs/03-DECISIONS.md](docs/03-DECISIONS.md) |
 | **Canonical Roadmap & 10 Gates** | [docs/04-ROADMAP.md](docs/04-ROADMAP.md) |
 | **Verification & Evidence Hierarchy** | [docs/05-VERIFICATION.md](docs/05-VERIFICATION.md) |
 | **Operational Runbook** | [docs/06-OPERATIONS.md](docs/06-OPERATIONS.md) |
@@ -28,7 +28,7 @@ Agent Orchestrator
 |
 +-- Orchestrator:  model/effort do user chọn theo từng run (harness: codex, kind: orchestrator)
 +-- Workers:       model/effort do user chọn theo từng run (harness: codex, kind: worker)
-|                  Target worker range: 3–7 | Initial runtime verification target: 3 | Maximum proven live concurrency: 3
+|                  Concurrency: `maximum proven live concurrency = 3` | Scheduler mặc định: 1–3 workers | 4–7: EXPERIMENTAL_CAPACITY (cần authority riêng)
 |
 +--> CLIProxyAPI Gateway (127.0.0.1:8317)
        +-- Credential pool được lọc theo catalog, eligibility và profile của run
@@ -86,7 +86,7 @@ See [docs/06-OPERATIONS.md](docs/06-OPERATIONS.md) for complete dynamic daemon d
 
 ## 5. Runtime Acceptance
 
-Candidate A is **ACCEPTED** following sequential runtime verification of all 10 canonical gates (Gates 1–10). Maximum proven live concurrency is **3** (Phase 6 COMPLETE). Phase 7 đang thực thi theo các checkpoint được user cấp quyền; AI Video Creator chỉ là workload mẫu, không phải gate hoàn thành workforce. Mỗi run chỉ dùng profile sau khi catalog, credential eligibility và AO session readback đều khớp.
+Candidate A is **ACCEPTED** following sequential runtime verification of all 10 canonical gates (Gates 1–10). `maximum proven live concurrency = 3` (Phase 6 COMPLETE). Scheduler mặc định: 1–3 workers; mức 4–7 là EXPERIMENTAL_CAPACITY cần authority và capacity proof riêng. Mục tiêu danh nghĩa ban đầu (6 Plus + 8 Pro) chỉ là mục tiêu lịch sử đã superseded; pool hiện tại là historical inventory và việc mở rộng phụ thuộc dữ liệu telemetry thực tế. Phase 7 đạt **COMPLETE_WITH_ACCEPTED_LIMITATIONS**; Phase 8 là active roadmap phase tiếp theo ở cấp độ thiết kế và governance (DESIGN_PHASE / IMPLEMENTATION_NOT_AUTHORIZED). Mỗi run chỉ dùng profile sau khi catalog, credential eligibility và AO session readback đều khớp.
 
 See:
 - [Canonical Roadmap & Runtime Gates](docs/04-ROADMAP.md)
